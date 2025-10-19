@@ -61,7 +61,7 @@ jobs:
       - name: Run linter
         uses: golangci/golangci-lint-action@v3
         with:
-          version: latest
+          version: v1.64
 
       - name: Run tests
         run: go test -v -race -coverprofile=coverage.out ./...
@@ -76,10 +76,7 @@ jobs:
           fi
 
       - name: Build check
-        run: |
-          go build -v ./...
-          cd examples/basic && go build -v
-          cd ../advanced && go build -v
+        run: go build -v ./...
 
       - name: Security scan
         run: |

@@ -47,7 +47,7 @@ jobs:
       - name: Run linter
         uses: golangci/golangci-lint-action@v3
         with:
-          version: latest
+          version: v1.64
           args: --timeout=5m
 
       - name: Run tests with coverage
@@ -65,10 +65,8 @@ jobs:
           fi
           echo "✅ Coverage ${coverage}% meets threshold ${threshold}%"
 
-      - name: Build examples
-        run: |
-          cd examples/basic && go build -v
-          cd ../advanced && go build -v
+      - name: Build all packages
+        run: go build -v ./...
 
       - name: Security check
         run: |
