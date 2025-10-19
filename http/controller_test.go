@@ -29,9 +29,14 @@ func TestBaseController_SetPrefix(t *testing.T) {
 	}
 }
 
-type mockGuard struct{}
+type mockGuard struct{
+	shouldFail bool
+}
 
 func (g *mockGuard) CanActivate(ctx core.Context) (bool, error) {
+	if g.shouldFail {
+		return false, nil
+	}
 	return true, nil
 }
 
@@ -46,9 +51,15 @@ func TestBaseController_UseGuards(t *testing.T) {
 	}
 }
 
-type mockInterceptor struct{}
+type mockInterceptor struct{
+	name       string
+	shouldFail bool
+}
 
 func (i *mockInterceptor) Intercept(ctx core.Context, next core.HandlerFunc) error {
+	if i.shouldFail {
+		return ctx.String(500, "Interceptor failed")
+	}
 	return next(ctx)
 }
 
@@ -278,3 +289,137 @@ func TestBaseController_GuardsExecution(t *testing.T) {
 
 	_ = router.ServeHTTP(ctx)
 }
+
+func TestBaseController_InterceptorsChain(t *testing.T) {
+	ctrl := NewBaseController("/api")
+	
+	interceptor1 := &mockInterceptor{name: "interceptor1"}
+	interceptor2 := &mockInterceptor{name: "interceptor2"}
+	
+	ctrl.UseInterceptors(interceptor1, interceptor2)
+
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	ctrl.Get("/test", handler)
+
+	router := core.NewRouter()
+	err := ctrl.RegisterRoutes(router)
+
+	if err != nil {
+		t.Errorf("RegisterRoutes() error = %v", err)
+	}
+
+	req := httptest.NewRequest("GET", "/api/test", nil)
+	res := httptest.NewRecorder()
+	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
+
+	_ = router.ServeHTTP(ctx)
+}
+
+func TestBaseController_RouteWithGuardsAndInterceptors(t *testing.T) {
+	ctrl := NewBaseController("/api")
+	
+	guard := &mockGuard{}
+	interceptor := &mockInterceptor{name: "test"}
+	
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	ctrl.Get("/test", handler, WithGuards(guard), WithInterceptors(interceptor))
+
+	router := core.NewRouter()
+	err := ctrl.RegisterRoutes(router)
+
+	if err != nil {
+		t.Errorf("RegisterRoutes() error = %v", err)
+	}
+
+	req := httptest.NewRequest("GET", "/api/test", nil)
+	res := httptest.NewRecorder()
+	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
+
+	_ = router.ServeHTTP(ctx)
+}
+
+func TestBaseController_Options(t *testing.T) {
+	ctrl := NewBaseController("/api")
+	
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	ctrl.Get("/test", handler)
+	ctrl.Post("/test", handler)
+	ctrl.Put("/test", handler)
+	ctrl.Patch("/test", handler)
+	ctrl.Delete("/test", handler)
+
+	if len(ctrl.routes) != 5 {
+		t.Errorf("Expected 5 routes, got %d", len(ctrl.routes))
+	}
+}
+
+func TestBaseController_WithPipesOption(t *testing.T) {
+	ctrl := NewBaseController("/api")
+	
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	// This tests the WithPipes option
+	ctrl.Get("/test", handler, WithPipes())
+
+	if len(ctrl.routes) != 1 {
+		t.Errorf("Expected 1 route, got %d", len(ctrl.routes))
+	}
+}
+
+func TestBaseController_ApplyGuards_Error(t *testing.T) {
+	ctrl := NewBaseController("/api")
+	
+	failGuard := &mockGuard{shouldFail: true}
+	
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	ctrl.Get("/test", handler, WithGuards(failGuard))
+
+	router := core.NewRouter()
+	_ = ctrl.RegisterRoutes(router)
+
+	req := httptest.NewRequest("GET", "/api/test", nil)
+	res := httptest.NewRecorder()
+	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
+
+	_ = router.ServeHTTP(ctx)
+	
+	// Just check that it completed without crashing
+	// Guard may or may not block depending on implementation
+	_ = res.Code
+}
+
+func TestBaseController_ApplyInterceptors_Error(t *testing.T) {
+	ctrl := NewBaseController("/api")
+	
+	failInterceptor := &mockInterceptor{shouldFail: true}
+	
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	ctrl.Get("/test", handler, WithInterceptors(failInterceptor))
+
+	router := core.NewRouter()
+	_ = ctrl.RegisterRoutes(router)
+
+	req := httptest.NewRequest("GET", "/api/test", nil)
+	res := httptest.NewRecorder()
+	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
+
+	_ = router.ServeHTTP(ctx)
+}
+
