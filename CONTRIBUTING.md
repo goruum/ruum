@@ -64,7 +64,7 @@ git commit -m "chore: update dependencies"
 Before your PR can be merged, it must pass:
 
 - ✅ **All tests** must pass (with race detection)
-- ✅ **Test coverage** must be ≥70%
+- ✅ **Test coverage** must be ≥80%
 - ✅ **Linter** must pass with no errors
 - ✅ **Security checks** must pass (govulncheck + gosec)
 - ✅ **Build** must succeed for all packages

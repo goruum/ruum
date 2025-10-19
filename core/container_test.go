@@ -369,3 +369,48 @@ func TestContainer_ConcurrentAccess(t *testing.T) {
 		<-done
 	}
 }
+
+type TestInterface interface {
+	DoSomething() string
+}
+
+type TestService struct{}
+
+func (s *TestService) DoSomething() string {
+	return "done"
+}
+
+func TestContainer_WithInterfaces(t *testing.T) {
+	container := NewContainer()
+
+	factory := func() *TestService {
+		return &TestService{}
+	}
+
+	// Register with interface binding
+	err := container.Register(
+		"testService",
+		factory,
+		WithScope(ScopeSingleton),
+		WithInterfaces((*TestInterface)(nil)),
+	)
+	if err != nil {
+		t.Errorf("Register() with interfaces error = %v", err)
+	}
+
+	// Should be able to resolve by interface type
+	result, err := container.ResolveByType(reflect.TypeOf((*TestInterface)(nil)).Elem())
+	if err != nil {
+		t.Errorf("ResolveByType() error = %v", err)
+	}
+
+	if result == nil {
+		t.Error("ResolveByType() returned nil")
+	}
+
+	// Verify the result implements the interface
+	_, ok := result.(TestInterface)
+	if !ok {
+		t.Error("Resolved instance does not implement TestInterface")
+	}
+}

@@ -128,6 +128,12 @@ func TestDefaultExceptionFilter_Catch(t *testing.T) {
 			expectedStatus: 500,
 			shouldContain:  "http: Server closed",
 		},
+		{
+			name:           "http exception with details",
+			err:            NewHTTPExceptionWithDetails(422, "validation error", map[string]string{"field": "invalid"}),
+			expectedStatus: 422,
+			shouldContain:  "validation error",
+		},
 	}
 
 	for _, tt := range tests {

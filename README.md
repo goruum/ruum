@@ -564,7 +564,7 @@ We use **Conventional Commits** for automatic versioning with **strict quality g
 ### Quality Guaranteed Releases 🛡️
 
 Every merge to `main` triggers automatic release **ONLY IF** all checks pass:
-- ✅ Tests pass (≥70% coverage)
+- ✅ Tests pass (≥80% coverage)
 - ✅ Linting passes
 - ✅ Security checks pass
 - ✅ Build succeeds
