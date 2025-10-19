@@ -27,18 +27,41 @@ Build scalable and maintainable server-side applications with elegant architectu
 
 ## ✨ Features
 
+### Core Features
 - 🏗️ **Modular Architecture** - Organize code into independent, reusable modules
 - 💉 **Dependency Injection** - Built-in DI container with multiple scopes (singleton, transient, request)
 - 🎯 **Type-Safe** - Leverage Go's type system for compile-time safety
+- 🔄 **Dynamic Modules** - Support for dynamic, configurable modules with ForRoot/ForFeature patterns
+- 🔁 **Lifecycle Hooks** - Comprehensive lifecycle management with multiple hooks
+
+### HTTP & API
+- 🌐 **Powerful Context** - Rich context with cookies, file uploads, redirects, and more
 - 🛡️ **Guards** - Declarative route protection with authentication and authorization
 - 🔄 **Interceptors** - Transform requests and responses with powerful interceptor chains
 - 🚰 **Pipes** - Validate and transform input data before it reaches handlers
-- ⚠️ **Exception Filters** - Centralized, structured error handling
-- 🪵 **Advanced Logging** - Built-in logger with colored output and multiple levels
-- ⚙️ **Configuration Management** - Load config from files or environment variables
-- 🌐 **Powerful Routing** - Clean, declarative HTTP routing with gorilla/mux
-- 🔌 **Middleware Chain** - Flexible middleware system for request/response processing
-- 🧪 **Testable** - Designed with testing in mind from the ground up
+- ⚠️ **Exception Filters** - Centralized error handling with stack traces
+- 🌐 **WebSocket Support** - Full-featured WebSocket implementation with rooms and events
+
+### Validation & Data
+- ✅ **Struct Validation** - Powerful tag-based validation similar to class-validator
+- 📝 **Data Binding** - Automatic binding of JSON, XML, query params, and forms
+- 🔍 **Type Conversion** - Smart type conversion for query parameters
+
+### Middleware
+- 🚦 **Rate Limiting** - Configurable request rate limiting
+- 🗜️ **Compression** - Automatic gzip compression with smart content detection
+- 💾 **Caching** - Response caching with TTL and smart invalidation
+- 🏥 **Health Checks** - Built-in health check endpoints with custom indicators
+- 🔢 **Request ID** - Automatic request ID generation and tracking
+- 🪵 **Advanced Logging** - Request/response logging with correlation IDs
+- 🔄 **CORS** - Flexible CORS configuration
+
+### Advanced Features
+- 📅 **Task Scheduling** - Cron-like task scheduling with multiple schedule types
+- 📡 **Event Emitter** - Event-driven architecture with sync/async event handling
+- 🧪 **Testing Utilities** - Comprehensive testing framework with mocks and helpers
+- ⚙️ **Configuration** - Load config from files or environment variables
+- 📊 **Stack Traces** - Detailed error stack traces for debugging
 
 ## 📦 Installation
 
@@ -357,7 +380,7 @@ app.UseGlobalFilters(core.NewDefaultExceptionFilter())
 
 ### Middleware
 
-Process requests globally:
+Process requests globally with powerful middleware:
 
 ```go
 import "github.com/goruum/ruum/middleware"
@@ -366,6 +389,32 @@ import "github.com/goruum/ruum/middleware"
 app.Use(middleware.Recovery(logger))        // Panic recovery
 app.Use(middleware.Logger(logger))          // Request logging
 app.Use(middleware.CORS(middleware.DefaultCORSConfig()))
+
+// Rate limiting
+app.Use(middleware.RateLimiter(middleware.RateLimiterConfig{
+    RequestsPerWindow: 100,
+    Window:            time.Minute,
+}))
+
+// Compression
+app.Use(middleware.Compression(middleware.DefaultCompressionConfig()))
+
+// Request ID tracking
+app.Use(middleware.RequestID(middleware.DefaultRequestIDConfig()))
+
+// Response caching
+app.Use(middleware.Cache(middleware.CacheConfig{
+    TTL: 5 * time.Minute,
+    Methods: []string{"GET"},
+}))
+
+// Health checks
+app.Use(middleware.HealthCheckMiddleware(middleware.HealthCheckConfig{
+    Path: "/health",
+    Checks: map[string]func() bool{
+        "database": func() bool { return db.Ping() == nil },
+    },
+}))
 
 // Custom middleware
 func AuthMiddleware(next core.HandlerFunc) core.HandlerFunc {
@@ -383,6 +432,181 @@ func AuthMiddleware(next core.HandlerFunc) core.HandlerFunc {
 }
 
 app.Use(AuthMiddleware)
+```
+
+### Validation
+
+Struct validation with tags (similar to class-validator):
+
+```go
+import "github.com/goruum/ruum/validation"
+
+type CreateUserDTO struct {
+    Email    string `json:"email" validate:"required,email"`
+    Password string `json:"password" validate:"required,minLength=8"`
+    Age      int    `json:"age" validate:"required,min=18,max=100"`
+    Username string `json:"username" validate:"required,alphanumeric,minLength=3,maxLength=20"`
+    Website  string `json:"website" validate:"url"`
+}
+
+func (c *UserController) Create(ctx core.Context) error {
+    var dto CreateUserDTO
+    if err := ctx.BindJSON(&dto); err != nil {
+        return core.BadRequestException("Invalid JSON")
+    }
+    
+    // Validate
+    if err := validation.Validate(&dto); err != nil {
+        return core.ValidationError("Validation failed", map[string]interface{}{
+            "errors": err,
+        })
+    }
+    
+    // Process...
+    return ctx.JSON(201, dto)
+}
+```
+
+### WebSocket
+
+Full-featured WebSocket support:
+
+```go
+import "github.com/goruum/ruum/websocket"
+
+// Create hub
+hub := websocket.NewHub()
+go hub.Run()
+
+// Register event handlers
+hub.On("chat:message", func(client *websocket.Client, msg websocket.Message) error {
+    // Broadcast to room
+    hub.BroadcastToRoom("lobby", "chat:message", msg.Data)
+    return nil
+})
+
+hub.On("room:join", func(client *websocket.Client, msg websocket.Message) error {
+    room := msg.Data.(string)
+    client.JoinRoom(room)
+    return nil
+})
+
+// Add WebSocket route
+app.Get("/ws", websocket.Handler(websocket.HandlerConfig{
+    Hub: hub,
+    OnConnect: func(client *websocket.Client) error {
+        log.Printf("Client connected: %s", client.ID)
+        return nil
+    },
+    OnDisconnect: func(client *websocket.Client) {
+        log.Printf("Client disconnected: %s", client.ID)
+    },
+}))
+```
+
+### Event Emitter
+
+Event-driven architecture:
+
+```go
+import "github.com/goruum/ruum/events"
+
+// Create emitter
+emitter := events.NewEventEmitter()
+
+// Register listeners
+emitter.On("user.created", func(event events.Event) error {
+    user := event.Payload.(User)
+    log.Printf("User created: %s", user.Email)
+    // Send welcome email
+    return sendWelcomeEmail(user)
+})
+
+emitter.OnAsync("user.created", func(event events.Event) {
+    user := event.Payload.(User)
+    // Update analytics (async)
+    analytics.Track(user.ID, "user_created")
+})
+
+// Emit events
+emitter.Emit("user.created", newUser)
+```
+
+### Task Scheduling
+
+Cron-like task scheduling:
+
+```go
+import "github.com/goruum/ruum/scheduler"
+
+// Create scheduler
+sched := scheduler.NewScheduler()
+sched.SetLogger(logger)
+
+// Add tasks
+sched.AddTask("cleanup", "Database Cleanup", 
+    scheduler.Daily(2, 0), // Every day at 2:00 AM
+    func(ctx context.Context) error {
+        return cleanupOldRecords()
+    },
+)
+
+sched.AddTask("backup", "Daily Backup",
+    scheduler.Every(24 * time.Hour),
+    func(ctx context.Context) error {
+        return performBackup()
+    },
+)
+
+sched.AddTask("health-check", "Health Check",
+    scheduler.Every(5 * time.Minute),
+    func(ctx context.Context) error {
+        return checkSystemHealth()
+    },
+)
+
+// Start scheduler
+sched.Start()
+```
+
+### Testing
+
+Comprehensive testing utilities:
+
+```go
+import (
+    "testing"
+    "github.com/goruum/ruum/testing"
+)
+
+func TestUserController(t *testing.T) {
+    // Create test context
+    ctx := testing.NewTestRequest("POST", "/users").
+        JSON(map[string]interface{}{
+            "email": "test@example.com",
+            "password": "password123",
+        }).
+        Build()
+    
+    // Mock service
+    mockService := testing.NewMockService()
+    mockService.SetReturn("CreateUser", &User{ID: "1"}, nil)
+    ctx.RegisterValue("userService", mockService)
+    
+    // Create controller and test
+    ctrl := NewUserController()
+    err := ctrl.Create(ctx)
+    
+    // Assertions
+    assert := testing.NewAssertionHelper(t)
+    assert.ExpectStatus(ctx, 201)
+    assert.ExpectJSON(ctx, &result)
+    
+    // Verify mock was called
+    if !mockService.WasCalled("CreateUser") {
+        t.Error("CreateUser was not called")
+    }
+}
 ```
 
 ## 🎯 Examples
