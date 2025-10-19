@@ -6,6 +6,11 @@ on:
       - main
       - develop
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 jobs:
   # PRs must pass these checks before merging
   validate:
