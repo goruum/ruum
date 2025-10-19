@@ -1358,3 +1358,157 @@ func TestValidator_Combined_Validations(t *testing.T) {
 	}
 }
 
+func TestValidator_ComparisonOperators(t *testing.T) {
+	type TestStruct struct {
+		Score  int     `validate:"gt=0,lt=100"`
+		Rating float64 `validate:"gte=0,lte=5"`
+	}
+
+	validator := NewValidator()
+
+	tests := []struct {
+		name    string
+		input   TestStruct
+		wantErr bool
+	}{
+		{"valid", TestStruct{Score: 50, Rating: 3.5}, false},
+		{"score too low", TestStruct{Score: 0, Rating: 3.5}, true},
+		{"score too high", TestStruct{Score: 100, Rating: 3.5}, true},
+		{"rating too low", TestStruct{Score: 50, Rating: -1}, true},
+		{"rating too high", TestStruct{Score: 50, Rating: 6}, true},
+		{"edge min", TestStruct{Score: 1, Rating: 0}, false},
+		{"edge max", TestStruct{Score: 99, Rating: 5}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(&tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidator_TypeValidators(t *testing.T) {
+	type TestStruct struct {
+		StringField string   `validate:"isString"`
+		NumberField int      `validate:"isNumber"`
+		BoolField   bool     `validate:"isBoolean"`
+		ArrayField  []string `validate:"isArray"`
+	}
+
+	validator := NewValidator()
+
+	// Valid struct
+	err := validator.Validate(&TestStruct{
+		StringField: "test",
+		NumberField: 42,
+		BoolField:   true,
+		ArrayField:  []string{"a", "b"},
+	})
+	if err != nil {
+		t.Errorf("Valid struct should not error: %v", err)
+	}
+}
+
+func TestValidator_InvalidTag_ParseError(t *testing.T) {
+	type TestStruct struct {
+		Age int `validate:"gt=invalid"`
+	}
+
+	validator := NewValidator()
+	
+	// Should not error because invalid parse is silently ignored
+	err := validator.Validate(&TestStruct{Age: 5})
+	// Error may or may not occur, just testing no panic
+	_ = err
+}
+
+func TestValidator_Uint_Types(t *testing.T) {
+	type TestStruct struct {
+		Uint8Field  uint8  `validate:"gt=0,lt=255"`
+		Uint16Field uint16 `validate:"gte=0,lte=1000"`
+		Uint32Field uint32 `validate:"gt=0"`
+		Uint64Field uint64 `validate:"gte=0"`
+	}
+
+	validator := NewValidator()
+
+	tests := []struct {
+		name    string
+		input   TestStruct
+		wantErr bool
+	}{
+		{"all valid", TestStruct{Uint8Field: 100, Uint16Field: 500, Uint32Field: 1000, Uint64Field: 10000}, false},
+		{"uint8 too low", TestStruct{Uint8Field: 0, Uint16Field: 500, Uint32Field: 1000, Uint64Field: 10000}, true},
+		{"uint8 too high", TestStruct{Uint8Field: 255, Uint16Field: 500, Uint32Field: 1000, Uint64Field: 10000}, true},
+		{"uint16 too high", TestStruct{Uint8Field: 100, Uint16Field: 1001, Uint32Field: 1000, Uint64Field: 10000}, true},
+		{"uint32 zero", TestStruct{Uint8Field: 100, Uint16Field: 500, Uint32Field: 0, Uint64Field: 10000}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(&tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidator_Float32_Types(t *testing.T) {
+	type TestStruct struct {
+		Float32Field float32 `validate:"gt=0.0,lt=10.0"`
+	}
+
+	validator := NewValidator()
+
+	tests := []struct {
+		name    string
+		value   float32
+		wantErr bool
+	}{
+		{"valid", 5.5, false},
+		{"too low", 0.0, true},
+		{"too high", 10.0, true},
+		{"edge valid", 0.1, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(&TestStruct{Float32Field: tt.value})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidator_InvalidComparisonType(t *testing.T) {
+	type TestStruct struct {
+		StringField string `validate:"gt=5"`
+	}
+
+	validator := NewValidator()
+	
+	// Should not error for string with gt comparison (silently ignored)
+	err := validator.Validate(&TestStruct{StringField: "test"})
+	// Error may or may not occur, just testing no panic
+	_ = err
+}
+
+func TestValidator_ZeroValue(t *testing.T) {
+	type TestStruct struct {
+		OptionalField string
+	}
+
+	validator := NewValidator()
+	
+	// Zero value should pass if no required tag
+	err := validator.Validate(&TestStruct{OptionalField: ""})
+	if err != nil {
+		t.Errorf("Zero value without required should not error: %v", err)
+	}
+}
+

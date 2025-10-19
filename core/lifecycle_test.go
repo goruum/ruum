@@ -2,7 +2,9 @@ package core
 
 import (
 	"context"
+	"sync"
 	"testing"
+	"time"
 )
 
 type mockBootstrapHook struct {
@@ -237,10 +239,11 @@ func TestNewGracefulShutdownManager(t *testing.T) {
 
 func TestGracefulShutdownManager_OnShutdown(t *testing.T) {
 	gsm := NewGracefulShutdownManager()
-	called := false
+	var called sync.WaitGroup
+	called.Add(1)
 
 	gsm.OnShutdown(func(signal TerminationSignal) {
-		called = true
+		called.Done()
 	})
 
 	go gsm.Shutdown("SIGTERM", "test shutdown")
@@ -250,7 +253,16 @@ func TestGracefulShutdownManager_OnShutdown(t *testing.T) {
 		t.Errorf("Signal = %v, want SIGTERM", signal.Signal)
 	}
 
-	if !called {
+	done := make(chan struct{})
+	go func() {
+		called.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// Success
+	case <-time.After(time.Second):
 		t.Error("Shutdown listener was not called")
 	}
 }
