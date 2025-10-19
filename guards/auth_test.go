@@ -325,4 +325,3 @@ func TestRolesGuard_EmptyRequiredRoles(t *testing.T) {
 		t.Error("CanActivate() returned true, want false")
 	}
 }
-

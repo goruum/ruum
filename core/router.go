@@ -99,7 +99,7 @@ func (r *DefaultRouter) ServeHTTP(ctx Context) error {
 	vars := mux.Vars(ctx.Request())
 	if defaultCtx, ok := ctx.(*DefaultContext); ok {
 		for key, value := range vars {
-			defaultCtx.SetParam(key, value)
+			defaultCtx.setParam(key, value)
 		}
 	}
 
@@ -110,25 +110,4 @@ func (r *DefaultRouter) ServeHTTP(ctx Context) error {
 	}
 
 	return NewHTTPException(http.StatusNotFound, "Route not found")
-}
-
-// GetMux returns the underlying mux router for advanced usage
-func (r *DefaultRouter) GetMux() *mux.Router {
-	return r.mux
-}
-
-// RouteMetadata contains route configuration
-type RouteMetadata struct {
-	Method       string
-	Path         string
-	Handler      HandlerFunc
-	Guards       []Guard
-	Interceptors []Interceptor
-	Pipes        []Pipe
-}
-
-// ControllerMetadata contains controller configuration
-type ControllerMetadata struct {
-	Prefix string
-	Routes []RouteMetadata
 }

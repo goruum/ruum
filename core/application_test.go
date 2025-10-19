@@ -393,4 +393,3 @@ func TestDefaultApplication_HandleError(t *testing.T) {
 		t.Errorf("Response code = %v, want 500", res.Code)
 	}
 }
-

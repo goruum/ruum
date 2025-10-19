@@ -278,4 +278,3 @@ func TestBaseController_GuardsExecution(t *testing.T) {
 
 	_ = router.ServeHTTP(ctx)
 }
-

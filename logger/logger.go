@@ -18,9 +18,9 @@ const (
 	// LevelDebug is for debug messages
 	LevelDebug LogLevel = "DEBUG"
 	// LevelInfo is for informational messages
-	LevelInfo  LogLevel = "INFO"
+	LevelInfo LogLevel = "INFO"
 	// LevelWarn is for warning messages
-	LevelWarn  LogLevel = "WARN"
+	LevelWarn LogLevel = "WARN"
 	// LevelError is for error messages
 	LevelError LogLevel = "ERROR"
 )

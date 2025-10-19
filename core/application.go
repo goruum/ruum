@@ -312,7 +312,7 @@ func (a *DefaultApplication) handleError(err error, ctx Context) {
 	if !ok {
 		httpErr = NewHTTPException(http.StatusInternalServerError, err.Error())
 	}
-	
+
 	_ = ctx.JSON(httpErr.StatusCode, map[string]interface{}{
 		"statusCode": httpErr.StatusCode,
 		"message":    httpErr.Message,

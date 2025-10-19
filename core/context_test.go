@@ -57,7 +57,7 @@ func TestDefaultContext_Param(t *testing.T) {
 	res := httptest.NewRecorder()
 	ctx := NewContext(context.Background(), req, res, NewContainer()).(*DefaultContext)
 
-	ctx.SetParam("id", "123")
+	ctx.setParam("id", "123")
 
 	param := ctx.Param("id")
 	if param != "123" {
@@ -265,4 +265,3 @@ func TestDefaultContext_Container(t *testing.T) {
 		t.Error("Container() does not match the provided container")
 	}
 }
-

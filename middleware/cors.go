@@ -3,6 +3,8 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/goruum/ruum/core"
 )
@@ -95,27 +97,16 @@ func setCORSHeaders(ctx core.Context, config CORSConfig, allowOrigin string) {
 
 // handlePreflightRequest handles OPTIONS preflight requests
 func handlePreflightRequest(ctx core.Context, config CORSConfig) {
-	ctx.SetHeader("Access-Control-Allow-Methods", joinStrings(config.AllowMethods, ", "))
-	ctx.SetHeader("Access-Control-Allow-Headers", joinStrings(config.AllowHeaders, ", "))
+	ctx.SetHeader("Access-Control-Allow-Methods", strings.Join(config.AllowMethods, ", "))
+	ctx.SetHeader("Access-Control-Allow-Headers", strings.Join(config.AllowHeaders, ", "))
 
 	if len(config.ExposeHeaders) > 0 {
-		ctx.SetHeader("Access-Control-Expose-Headers", joinStrings(config.ExposeHeaders, ", "))
+		ctx.SetHeader("Access-Control-Expose-Headers", strings.Join(config.ExposeHeaders, ", "))
 	}
 
 	if config.MaxAge > 0 {
-		ctx.SetHeader("Access-Control-Max-Age", string(rune(config.MaxAge)))
+		ctx.SetHeader("Access-Control-Max-Age", strconv.Itoa(config.MaxAge))
 	}
 
 	ctx.Status(http.StatusNoContent)
-}
-
-func joinStrings(strs []string, sep string) string {
-	result := ""
-	for i, s := range strs {
-		if i > 0 {
-			result += sep
-		}
-		result += s
-	}
-	return result
 }

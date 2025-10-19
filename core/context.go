@@ -71,8 +71,8 @@ func (c *DefaultContext) Param(key string) string {
 	return c.params[key]
 }
 
-// SetParam sets a URL parameter value.
-func (c *DefaultContext) SetParam(key, value string) {
+// setParam sets a URL parameter value (internal use only).
+func (c *DefaultContext) setParam(key, value string) {
 	c.params[key] = value
 }
 

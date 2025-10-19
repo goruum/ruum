@@ -356,4 +356,3 @@ func TestRouter_HandlerError(t *testing.T) {
 		t.Errorf("StatusCode = %v, want 400", httpErr.StatusCode)
 	}
 }
-

@@ -221,43 +221,6 @@ func TestCORS_ExposeHeaders(t *testing.T) {
 	}
 }
 
-func TestJoinStrings(t *testing.T) {
-	tests := []struct {
-		name     string
-		strs     []string
-		sep      string
-		expected string
-	}{
-		{
-			name:     "multiple strings",
-			strs:     []string{"GET", "POST", "PUT"},
-			sep:      ", ",
-			expected: "GET, POST, PUT",
-		},
-		{
-			name:     "single string",
-			strs:     []string{"GET"},
-			sep:      ", ",
-			expected: "GET",
-		},
-		{
-			name:     "empty slice",
-			strs:     []string{},
-			sep:      ", ",
-			expected: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := joinStrings(tt.strs, tt.sep)
-			if result != tt.expected {
-				t.Errorf("joinStrings() = %v, want %v", result, tt.expected)
-			}
-		})
-	}
-}
-
 func TestCORS_NoOriginHeader(t *testing.T) {
 	config := CORSConfig{
 		AllowOrigins: []string{"*"},
@@ -287,4 +250,3 @@ func TestCORS_NoOriginHeader(t *testing.T) {
 		t.Errorf("Access-Control-Allow-Origin = %v, want '*'", allowOrigin)
 	}
 }
-

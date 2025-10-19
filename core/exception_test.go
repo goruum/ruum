@@ -22,7 +22,7 @@ func TestNewHTTPException(t *testing.T) {
 func TestNewHTTPExceptionWithDetails(t *testing.T) {
 	details := map[string]interface{}{"field": "value"}
 	exc := NewHTTPExceptionWithDetails(422, "validation failed", details)
-	
+
 	if exc.StatusCode != 422 {
 		t.Errorf("StatusCode = %v, want 422", exc.StatusCode)
 	}
@@ -147,4 +147,3 @@ func TestDefaultExceptionFilter_Catch(t *testing.T) {
 		})
 	}
 }
-

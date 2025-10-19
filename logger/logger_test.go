@@ -287,4 +287,3 @@ func TestDefaultLogger_NonColorizedOutput(t *testing.T) {
 	logger.Warn("plain warning", nil)
 	logger.Error("plain error", nil)
 }
-
