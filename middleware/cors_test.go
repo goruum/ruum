@@ -250,3 +250,33 @@ func TestCORS_NoOriginHeader(t *testing.T) {
 		t.Errorf("Access-Control-Allow-Origin = %v, want '*'", allowOrigin)
 	}
 }
+
+func TestCORS_EmptyAllowOrigins(t *testing.T) {
+	config := CORSConfig{
+		AllowOrigins: []string{}, // Empty origins list
+	}
+
+	middleware := CORS(config)
+
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	wrappedHandler := middleware(handler)
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("Origin", "https://example.com")
+	res := httptest.NewRecorder()
+	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
+
+	err := wrappedHandler(ctx)
+	if err != nil {
+		t.Errorf("Handler error = %v", err)
+	}
+
+	// Should not set CORS headers when allowOrigins is empty
+	allowOrigin := res.Header().Get("Access-Control-Allow-Origin")
+	if allowOrigin != "" {
+		t.Errorf("Access-Control-Allow-Origin should be empty, got %v", allowOrigin)
+	}
+}
