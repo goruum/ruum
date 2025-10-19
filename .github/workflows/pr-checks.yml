@@ -1,0 +1,126 @@
+name: PR Checks
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  # PR'lar merge olmadan önce bu kontroller geçmeli
+  validate:
+    name: Validate PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: .commitlintrc.json
+
+      - name: Check PR title
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+
+  quality:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run go vet
+        run: go vet ./...
+
+      - name: Run linter
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+
+      - name: Run tests
+        run: go test -v -race -coverprofile=coverage.out ./...
+
+      - name: Check coverage
+        run: |
+          coverage=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "::notice title=Coverage::Coverage is ${coverage}%"
+          threshold=70
+          if (( $(echo "$coverage < $threshold" | bc -l) )); then
+            echo "::warning title=Low Coverage::Coverage ${coverage}% is below recommended ${threshold}%"
+          fi
+
+      - name: Build check
+        run: |
+          go build -v ./...
+          cd examples/basic && go build -v
+          cd ../advanced && go build -v
+
+      - name: Security scan
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          govulncheck ./...
+
+  comment:
+    name: PR Comment
+    needs: [validate, quality]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const validate = '${{ needs.validate.result }}';
+            const quality = '${{ needs.quality.result }}';
+            
+            let status = '✅ All checks passed!';
+            if (validate !== 'success' || quality !== 'success') {
+              status = '❌ Some checks failed. Please fix the issues.';
+            }
+            
+            const body = `## PR Checks Summary
+            
+            ${status}
+            
+            | Check | Status |
+            |-------|--------|
+            | Commit Messages | ${validate === 'success' ? '✅' : '❌'} |
+            | Quality & Tests | ${quality === 'success' ? '✅' : '❌'} |
+            
+            ${validate !== 'success' || quality !== 'success' 
+              ? '⚠️ Please ensure all checks pass before merging.' 
+              : '🚀 Ready to merge!'}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+

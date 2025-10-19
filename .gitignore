@@ -1,0 +1,45 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Dependencies
+vendor/
+go.work
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+bin/
+dist/
+build/
+
+# Config
+config.json
+config.*.json
+
+# Logs
+*.log
+logs/
+
+# Temp
+tmp/
+temp/
