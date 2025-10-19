@@ -2,7 +2,7 @@
 
 <div align="center">
 
-[![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square&logo=opensourceinitiative&logoColor=white)](LICENSE)
 [![Documentation](https://img.shields.io/badge/Documentation-pkg.go.dev-007d9c?style=flat-square&logo=go&logoColor=white)](https://pkg.go.dev/github.com/goruum/ruum)
 [![Release](https://img.shields.io/github/v/release/goruum/ruum?style=flat-square&label=Release&color=blue&logo=github&logoColor=white)](https://github.com/goruum/ruum/releases)
@@ -46,7 +46,7 @@ Build scalable and maintainable server-side applications with elegant architectu
 go get github.com/goruum/ruum
 ```
 
-**Requirements:** Go 1.21 or higher
+**Requirements:** Go 1.23 or higher
 
 ## 🚀 Quick Start
 
