@@ -1,5 +1,5 @@
-// Package utils provides utility functions for the framework.
-package utils
+// Package strutil provides string utility functions for the framework.
+package strutil
 
 import (
 	"encoding/json"

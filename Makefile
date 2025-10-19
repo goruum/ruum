@@ -59,8 +59,6 @@ security: ## Run security checks
 build: ## Build all packages
 	@echo "🏗️  Building packages..."
 	@go build -v ./...
-	@cd examples/basic && go build -v
-	@cd examples/advanced && go build -v
 	@echo "✅ Build completed"
 
 clean: ## Clean build artifacts and caches
@@ -100,13 +98,6 @@ install-tools: ## Install development tools
 	@go install github.com/securego/gosec/v2/cmd/gosec@latest
 	@echo "✅ Tools installed"
 
-run-basic: ## Run basic example
-	@echo "🚀 Running basic example..."
-	@cd examples/basic && go run main.go
-
-run-advanced: ## Run advanced example
-	@echo "🚀 Running advanced example..."
-	@cd examples/advanced && go run main.go
 
 # Pre-commit hook - all checks
 pre-commit: fmt vet lint test check-coverage security build ## Run all checks before commit

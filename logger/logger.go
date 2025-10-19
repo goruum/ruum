@@ -125,43 +125,42 @@ func (l *DefaultLogger) formatFields(fields map[string]interface{}) string {
 	return string(data)
 }
 
-// LoggerModule provides logger as a module
-// LoggerModule provides logging services.
-type LoggerModule struct {
+// Module provides logging services as a module.
+type Module struct {
 	logger core.Logger
 }
 
 // NewLoggerModule creates a new logger module
-func NewLoggerModule(logger core.Logger) *LoggerModule {
+func NewLoggerModule(logger core.Logger) *Module {
 	if logger == nil {
 		logger = NewDefaultLogger()
 	}
-	return &LoggerModule{
+	return &Module{
 		logger: logger,
 	}
 }
 
 // Configure registers the logger in the container.
-func (m *LoggerModule) Configure(container core.Container) error {
+func (m *Module) Configure(container core.Container) error {
 	return container.RegisterValue("logger", m.logger)
 }
 
 // GetControllers returns the module's controllers.
-func (m *LoggerModule) GetControllers() []interface{} {
+func (m *Module) GetControllers() []interface{} {
 	return []interface{}{}
 }
 
 // GetProviders returns the module's providers.
-func (m *LoggerModule) GetProviders() []interface{} {
+func (m *Module) GetProviders() []interface{} {
 	return []interface{}{m.logger}
 }
 
 // GetImports returns the imported modules.
-func (m *LoggerModule) GetImports() []core.Module {
+func (m *Module) GetImports() []core.Module {
 	return []core.Module{}
 }
 
 // GetExports returns the exported provider names.
-func (m *LoggerModule) GetExports() []string {
+func (m *Module) GetExports() []string {
 	return []string{"logger"}
 }

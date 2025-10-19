@@ -151,43 +151,42 @@ func (c *DefaultConfigService) Has(key string) bool {
 	return os.Getenv(key) != ""
 }
 
-// ConfigModule provides configuration as a module
-// ConfigModule provides configuration services.
-type ConfigModule struct {
+// Module provides configuration as a module.
+type Module struct {
 	config core.ConfigService
 }
 
 // NewConfigModule creates a new config module
-func NewConfigModule(config core.ConfigService) *ConfigModule {
+func NewConfigModule(config core.ConfigService) *Module {
 	if config == nil {
 		config = NewConfigService()
 	}
-	return &ConfigModule{
+	return &Module{
 		config: config,
 	}
 }
 
 // Configure registers the config service in the container.
-func (m *ConfigModule) Configure(container core.Container) error {
+func (m *Module) Configure(container core.Container) error {
 	return container.RegisterValue("config", m.config)
 }
 
 // GetControllers returns the module's controllers.
-func (m *ConfigModule) GetControllers() []interface{} {
+func (m *Module) GetControllers() []interface{} {
 	return []interface{}{}
 }
 
 // GetProviders returns the module's providers.
-func (m *ConfigModule) GetProviders() []interface{} {
+func (m *Module) GetProviders() []interface{} {
 	return []interface{}{m.config}
 }
 
 // GetImports returns the imported modules.
-func (m *ConfigModule) GetImports() []core.Module {
+func (m *Module) GetImports() []core.Module {
 	return []core.Module{}
 }
 
 // GetExports returns the exported provider names.
-func (m *ConfigModule) GetExports() []string {
+func (m *Module) GetExports() []string {
 	return []string{"config"}
 }
