@@ -9,27 +9,27 @@ import (
 // Context provides access to request/response and dependency injection container
 type Context interface {
 	context.Context
-	
+
 	// HTTP related
 	Request() *http.Request
 	Response() http.ResponseWriter
-	
+
 	// Request data
 	Param(key string) string
 	Query(key string) string
 	Body(v interface{}) error
 	Header(key string) string
-	
+
 	// Response methods
 	JSON(code int, v interface{}) error
 	String(code int, s string) error
 	Status(code int)
 	SetHeader(key, value string)
-	
+
 	// Context data
 	Get(key string) interface{}
 	Set(key string, value interface{})
-	
+
 	// DI Container access
 	Container() Container
 }
@@ -116,4 +116,3 @@ func (c *DefaultContext) Set(key string, value interface{}) {
 func (c *DefaultContext) Container() Container {
 	return c.container
 }
-

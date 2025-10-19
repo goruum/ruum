@@ -50,9 +50,9 @@ func (l *DefaultLogger) Log(level string, message string, fields map[string]inte
 	if !l.shouldLog(logLevel) {
 		return
 	}
-	
+
 	timestamp := time.Now().Format(l.timeFormat)
-	
+
 	if l.colorize {
 		color := l.getColor(logLevel)
 		reset := "\033[0m"
@@ -87,7 +87,7 @@ func (l *DefaultLogger) shouldLog(level LogLevel) bool {
 		LevelWarn:  2,
 		LevelError: 3,
 	}
-	
+
 	return levels[level] >= levels[l.level]
 }
 
@@ -98,7 +98,7 @@ func (l *DefaultLogger) getColor(level LogLevel) string {
 		LevelWarn:  "\033[33m", // Yellow
 		LevelError: "\033[31m", // Red
 	}
-	
+
 	return colors[level]
 }
 
@@ -106,12 +106,12 @@ func (l *DefaultLogger) formatFields(fields map[string]interface{}) string {
 	if len(fields) == 0 {
 		return ""
 	}
-	
+
 	data, err := json.Marshal(fields)
 	if err != nil {
 		return ""
 	}
-	
+
 	return string(data)
 }
 
@@ -149,4 +149,3 @@ func (m *LoggerModule) GetImports() []core.Module {
 func (m *LoggerModule) GetExports() []string {
 	return []string{"logger"}
 }
-

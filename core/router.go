@@ -72,7 +72,7 @@ func (r *DefaultRouter) handle(method, path string, handler HandlerFunc) {
 	fullPath := r.prefix + path
 	key := method + ":" + fullPath
 	r.handlers[key] = handler
-	
+
 	r.mux.HandleFunc(fullPath, func(w http.ResponseWriter, req *http.Request) {
 		// Handler will be called by ServeHTTP
 	}).Methods(method)
@@ -94,13 +94,13 @@ func (r *DefaultRouter) ServeHTTP(ctx Context) error {
 			defaultCtx.SetParam(key, value)
 		}
 	}
-	
+
 	// Find and execute the handler
 	key := ctx.Request().Method + ":" + ctx.Request().URL.Path
 	if handler, exists := r.handlers[key]; exists {
 		return handler(ctx)
 	}
-	
+
 	return NewHttpException(http.StatusNotFound, "Route not found")
 }
 
@@ -111,12 +111,12 @@ func (r *DefaultRouter) GetMux() *mux.Router {
 
 // RouteMetadata contains route configuration
 type RouteMetadata struct {
-	Method      string
-	Path        string
-	Handler     HandlerFunc
-	Guards      []Guard
+	Method       string
+	Path         string
+	Handler      HandlerFunc
+	Guards       []Guard
 	Interceptors []Interceptor
-	Pipes       []Pipe
+	Pipes        []Pipe
 }
 
 // ControllerMetadata contains controller configuration
@@ -124,4 +124,3 @@ type ControllerMetadata struct {
 	Prefix string
 	Routes []RouteMetadata
 }
-

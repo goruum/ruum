@@ -20,14 +20,14 @@ func NewLoggingInterceptor(logger core.Logger) *LoggingInterceptor {
 
 func (i *LoggingInterceptor) Intercept(ctx core.Context, next core.HandlerFunc) error {
 	start := time.Now()
-	
+
 	i.logger.Debug("Before handler", map[string]interface{}{
 		"method": ctx.Request().Method,
 		"path":   ctx.Request().URL.Path,
 	})
-	
+
 	err := next(ctx)
-	
+
 	duration := time.Since(start)
 	i.logger.Debug("After handler", map[string]interface{}{
 		"method":   ctx.Request().Method,
@@ -35,7 +35,7 @@ func (i *LoggingInterceptor) Intercept(ctx core.Context, next core.HandlerFunc) 
 		"duration": duration.String(),
 		"error":    err,
 	})
-	
+
 	return err
 }
 
@@ -57,11 +57,11 @@ func (i *TransformInterceptor) Intercept(ctx core.Context, next core.HandlerFunc
 	if err != nil {
 		return err
 	}
-	
+
 	// Transform response (if needed)
 	// This is a simplified version - in a real implementation,
 	// you'd need to intercept the response writer
-	
+
 	return nil
 }
 
@@ -82,22 +82,21 @@ func NewCacheInterceptor(ttl time.Duration) *CacheInterceptor {
 func (i *CacheInterceptor) Intercept(ctx core.Context, next core.HandlerFunc) error {
 	// Generate cache key
 	key := ctx.Request().Method + ":" + ctx.Request().URL.Path
-	
+
 	// Check cache
 	if cached, exists := i.cache[key]; exists {
 		// Return cached response
 		return ctx.JSON(200, cached)
 	}
-	
+
 	// Execute handler
 	err := next(ctx)
 	if err != nil {
 		return err
 	}
-	
+
 	// Store in cache (simplified version)
 	// In a real implementation, you'd need to capture the response
-	
+
 	return nil
 }
-

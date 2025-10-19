@@ -81,37 +81,37 @@ func (c *BaseController) addRoute(method, path string, handler core.HandlerFunc,
 		Interceptors: make([]core.Interceptor, 0),
 		Pipes:        make([]core.Pipe, 0),
 	}
-	
+
 	for _, opt := range opts {
 		opt(&route)
 	}
-	
+
 	c.routes = append(c.routes, route)
 }
 
 // RegisterRoutes registers all routes with the router
 func (c *BaseController) RegisterRoutes(router core.Router) error {
 	group := router.Group(c.prefix)
-	
+
 	for _, route := range c.routes {
 		// Wrap handler with route-specific middleware
 		handler := route.Handler
-		
+
 		// Apply route pipes
 		handler = c.applyPipes(handler, route.Pipes)
-		
+
 		// Apply route interceptors
 		handler = c.applyInterceptors(handler, route.Interceptors)
-		
+
 		// Apply controller interceptors
 		handler = c.applyInterceptors(handler, c.interceptors)
-		
+
 		// Apply route guards
 		handler = c.applyGuards(handler, route.Guards)
-		
+
 		// Apply controller guards
 		handler = c.applyGuards(handler, c.guards)
-		
+
 		// Register route
 		switch route.Method {
 		case "GET":
@@ -126,7 +126,7 @@ func (c *BaseController) RegisterRoutes(router core.Router) error {
 			group.Patch(route.Path, handler)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -188,4 +188,3 @@ func WithPipes(pipes ...core.Pipe) RouteOption {
 		r.Pipes = append(r.Pipes, pipes...)
 	}
 }
-

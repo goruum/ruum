@@ -80,4 +80,3 @@ type OnApplicationBootstrap interface {
 type OnApplicationShutdown interface {
 	OnApplicationShutdown() error
 }
-

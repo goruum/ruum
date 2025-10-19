@@ -14,11 +14,11 @@ func CreateApplication(rootModule core.Module, opts ...ApplicationOption) (core.
 		ShutdownTimeout:     0,
 		EnableShutdownHooks: true,
 	}
-	
+
 	for _, opt := range opts {
 		opt(&config)
 	}
-	
+
 	factory := core.NewApplicationFactory()
 	return factory.Create(rootModule, config)
 }
@@ -56,4 +56,3 @@ func WithShutdownHooks(enabled bool) ApplicationOption {
 		c.EnableShutdownHooks = enabled
 	}
 }
-

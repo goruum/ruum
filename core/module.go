@@ -42,14 +42,14 @@ func (m *BaseModule) Configure(container Container) error {
 			return fmt.Errorf("failed to register provider %s: %w", providerMeta.Name, err)
 		}
 	}
-	
+
 	// Configure imported modules
 	for _, importedModule := range m.metadata.Imports {
 		if err := importedModule.Configure(container); err != nil {
 			return fmt.Errorf("failed to configure imported module: %w", err)
 		}
 	}
-	
+
 	return nil
 }
 
@@ -129,4 +129,3 @@ func (b *ModuleBuilder) Exports(names ...string) *ModuleBuilder {
 func (b *ModuleBuilder) Build() Module {
 	return NewModule(b.metadata)
 }
-

@@ -57,8 +57,15 @@ clean: ## Clean build artifacts and caches
 
 fmt: ## Format code
 	@echo "💅 Formatting code..."
-	@find . -name "*.go" -type f -not -path "./vendor/*" -not -path "./.git/*" -exec gofmt -s -w {} \;
-	@echo "✅ Formatting completed"
+	@if command -v gofmt >/dev/null 2>&1; then \
+		find . -name "*.go" -type f -not -path "./vendor/*" -not -path "./.git/*" | while read -r file; do \
+			gofmt -s -w "$$file"; \
+		done; \
+		echo "✅ Formatting completed"; \
+	else \
+		echo "❌ gofmt not found. Please install Go: https://go.dev/dl/"; \
+		exit 1; \
+	fi
 
 vet: ## Run go vet
 	@echo "🔎 Running go vet..."

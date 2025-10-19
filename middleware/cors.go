@@ -46,7 +46,7 @@ func CORS(config CORSConfig) core.MiddlewareFunc {
 		return func(ctx core.Context) error {
 			req := ctx.Request()
 			origin := req.Header.Get("Origin")
-			
+
 			// Check if origin is allowed
 			allowOrigin := ""
 			if len(config.AllowOrigins) > 0 {
@@ -61,32 +61,32 @@ func CORS(config CORSConfig) core.MiddlewareFunc {
 					}
 				}
 			}
-			
+
 			if allowOrigin != "" {
 				ctx.SetHeader("Access-Control-Allow-Origin", allowOrigin)
 			}
-			
+
 			if config.AllowCredentials {
 				ctx.SetHeader("Access-Control-Allow-Credentials", "true")
 			}
-			
+
 			// Handle preflight request
 			if req.Method == http.MethodOptions {
 				ctx.SetHeader("Access-Control-Allow-Methods", joinStrings(config.AllowMethods, ", "))
 				ctx.SetHeader("Access-Control-Allow-Headers", joinStrings(config.AllowHeaders, ", "))
-				
+
 				if len(config.ExposeHeaders) > 0 {
 					ctx.SetHeader("Access-Control-Expose-Headers", joinStrings(config.ExposeHeaders, ", "))
 				}
-				
+
 				if config.MaxAge > 0 {
 					ctx.SetHeader("Access-Control-Max-Age", string(rune(config.MaxAge)))
 				}
-				
+
 				ctx.Status(http.StatusNoContent)
 				return nil
 			}
-			
+
 			return next(ctx)
 		}
 	}
@@ -102,4 +102,3 @@ func joinStrings(strs []string, sep string) string {
 	}
 	return result
 }
-

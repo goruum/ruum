@@ -70,16 +70,15 @@ func (f *DefaultExceptionFilter) Catch(err error, ctx Context) error {
 	if !ok {
 		httpErr = NewHttpException(500, err.Error())
 	}
-	
+
 	response := map[string]interface{}{
 		"statusCode": httpErr.StatusCode,
 		"message":    httpErr.Message,
 	}
-	
+
 	if httpErr.Details != nil {
 		response["details"] = httpErr.Details
 	}
-	
+
 	return ctx.JSON(httpErr.StatusCode, response)
 }
-

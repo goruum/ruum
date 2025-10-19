@@ -83,17 +83,17 @@ func NewProductController(productService *ProductService) *ProductController {
 		BaseController: ruumhttp.NewBaseController("/products"),
 		productService: productService,
 	}
-	
+
 	// Add controller-level guards (authentication required for all routes)
 	ctrl.UseGuards(guards.NewAuthGuard())
-	
+
 	// Register routes
 	ctrl.Get("", ctrl.FindAll)
 	ctrl.Get("/{id}", ctrl.FindOne)
 	ctrl.Post("", ctrl.Create)
 	ctrl.Put("/{id}", ctrl.Update)
 	ctrl.Delete("/{id}", ctrl.Delete)
-	
+
 	return ctrl
 }
 
@@ -106,12 +106,12 @@ func (c *ProductController) FindAll(ctx core.Context) error {
 
 func (c *ProductController) FindOne(ctx core.Context) error {
 	id := ctx.Param("id")
-	
+
 	product, err := c.productService.FindOne(id)
 	if err != nil {
 		return err
 	}
-	
+
 	return ctx.JSON(200, map[string]interface{}{
 		"data": product,
 	})
@@ -122,12 +122,12 @@ func (c *ProductController) Create(ctx core.Context) error {
 	if err := ctx.Body(&product); err != nil {
 		return core.BadRequestException("Invalid request body")
 	}
-	
+
 	created, err := c.productService.Create(&product)
 	if err != nil {
 		return err
 	}
-	
+
 	return ctx.JSON(201, map[string]interface{}{
 		"message": "Product created successfully",
 		"data":    created,
@@ -136,17 +136,17 @@ func (c *ProductController) Create(ctx core.Context) error {
 
 func (c *ProductController) Update(ctx core.Context) error {
 	id := ctx.Param("id")
-	
+
 	var product Product
 	if err := ctx.Body(&product); err != nil {
 		return core.BadRequestException("Invalid request body")
 	}
-	
+
 	updated, err := c.productService.Update(id, &product)
 	if err != nil {
 		return err
 	}
-	
+
 	return ctx.JSON(200, map[string]interface{}{
 		"message": "Product updated successfully",
 		"data":    updated,
@@ -155,11 +155,11 @@ func (c *ProductController) Update(ctx core.Context) error {
 
 func (c *ProductController) Delete(ctx core.Context) error {
 	id := ctx.Param("id")
-	
+
 	if err := c.productService.Delete(id); err != nil {
 		return err
 	}
-	
+
 	return ctx.JSON(200, map[string]interface{}{
 		"message": "Product deleted successfully",
 	})
@@ -174,9 +174,9 @@ func NewPublicController() *PublicController {
 	ctrl := &PublicController{
 		BaseController: ruumhttp.NewBaseController("/public"),
 	}
-	
+
 	ctrl.Get("/info", ctrl.Info)
-	
+
 	return ctrl
 }
 
@@ -191,10 +191,10 @@ func (c *PublicController) Info(ctx core.Context) error {
 func main() {
 	// Create logger
 	ruumLogger := logger.NewDefaultLogger()
-	
+
 	// Create services
 	productService := NewProductService()
-	
+
 	// Create module
 	appModule := core.NewModuleBuilder().
 		Controllers(
@@ -205,7 +205,7 @@ func main() {
 			return productService
 		}, core.ScopeSingleton, true).
 		Build()
-	
+
 	// Create application
 	app, err := factory.CreateApplication(
 		appModule,
@@ -214,29 +214,28 @@ func main() {
 		factory.WithCORS("http://localhost:3000", "http://localhost:4200"),
 		factory.WithShutdownHooks(true),
 	)
-	
+
 	if err != nil {
 		log.Fatal("Failed to create application:", err)
 	}
-	
+
 	// Use global middleware
 	app.Use(middleware.Recovery(ruumLogger))
 	app.Use(middleware.Logger(ruumLogger))
-	
+
 	// Use global interceptors
 	app.UseGlobalInterceptors(interceptors.NewLoggingInterceptor(ruumLogger))
-	
+
 	// Use global exception filters
 	app.UseGlobalFilters(core.NewDefaultExceptionFilter())
-	
+
 	// Start server
 	ruumLogger.Info("🚀 Starting advanced Ruum application...", map[string]interface{}{
 		"port": 3000,
 		"env":  "development",
 	})
-	
+
 	if err := app.Listen(":3000"); err != nil {
 		log.Fatal("Failed to start server:", err)
 	}
 }
-

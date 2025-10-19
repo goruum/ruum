@@ -37,4 +37,3 @@ func (l *SimpleLogger) Warn(message string, fields map[string]interface{}) {
 func (l *SimpleLogger) Error(message string, fields map[string]interface{}) {
 	l.Log("ERROR", message, fields)
 }
-

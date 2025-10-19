@@ -12,17 +12,17 @@ func Logger(logger core.Logger) core.MiddlewareFunc {
 		return func(ctx core.Context) error {
 			start := time.Now()
 			req := ctx.Request()
-			
+
 			// Log request
 			logger.Info("Incoming request", map[string]interface{}{
 				"method": req.Method,
 				"path":   req.URL.Path,
 				"remote": req.RemoteAddr,
 			})
-			
+
 			// Call next handler
 			err := next(ctx)
-			
+
 			// Log response
 			duration := time.Since(start)
 			fields := map[string]interface{}{
@@ -30,14 +30,14 @@ func Logger(logger core.Logger) core.MiddlewareFunc {
 				"path":     req.URL.Path,
 				"duration": duration.String(),
 			}
-			
+
 			if err != nil {
 				fields["error"] = err.Error()
 				logger.Error("Request failed", fields)
 			} else {
 				logger.Info("Request completed", fields)
 			}
-			
+
 			return err
 		}
 	}
@@ -55,9 +55,8 @@ func Recovery(logger core.Logger) core.MiddlewareFunc {
 					err = core.InternalServerErrorException("Internal server error")
 				}
 			}()
-			
+
 			return next(ctx)
 		}
 	}
 }
-

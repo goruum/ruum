@@ -43,13 +43,13 @@ func (p *ParseIntPipe) Transform(value interface{}, metadata *core.ArgumentMetad
 	if !ok {
 		return nil, core.BadRequestException("Value must be a string")
 	}
-	
+
 	var result int
 	_, err := fmt.Sscanf(str, "%d", &result)
 	if err != nil {
 		return nil, core.BadRequestException("Invalid integer value")
 	}
-	
+
 	return result, nil
 }
 
@@ -65,7 +65,7 @@ func (p *ParseBoolPipe) Transform(value interface{}, metadata *core.ArgumentMeta
 	if !ok {
 		return nil, core.BadRequestException("Value must be a string")
 	}
-	
+
 	switch str {
 	case "true", "1", "yes":
 		return true, nil
@@ -100,16 +100,16 @@ func Required() Validator {
 		if value == nil {
 			return fmt.Errorf("value is required")
 		}
-		
+
 		v := reflect.ValueOf(value)
 		if v.Kind() == reflect.Ptr && v.IsNil() {
 			return fmt.Errorf("value is required")
 		}
-		
+
 		if v.Kind() == reflect.String && v.Len() == 0 {
 			return fmt.Errorf("value is required")
 		}
-		
+
 		return nil
 	}
 }
@@ -120,11 +120,11 @@ func MinLength(min int) Validator {
 		if !ok {
 			return fmt.Errorf("value must be a string")
 		}
-		
+
 		if len(str) < min {
 			return fmt.Errorf("value must be at least %d characters", min)
 		}
-		
+
 		return nil
 	}
 }
@@ -135,11 +135,11 @@ func MaxLength(max int) Validator {
 		if !ok {
 			return fmt.Errorf("value must be a string")
 		}
-		
+
 		if len(str) > max {
 			return fmt.Errorf("value must be at most %d characters", max)
 		}
-		
+
 		return nil
 	}
 }
@@ -147,7 +147,7 @@ func MaxLength(max int) Validator {
 func Min(min float64) Validator {
 	return func(value interface{}) error {
 		var num float64
-		
+
 		switch v := value.(type) {
 		case int:
 			num = float64(v)
@@ -156,11 +156,11 @@ func Min(min float64) Validator {
 		default:
 			return fmt.Errorf("value must be a number")
 		}
-		
+
 		if num < min {
 			return fmt.Errorf("value must be at least %f", min)
 		}
-		
+
 		return nil
 	}
 }
@@ -168,7 +168,7 @@ func Min(min float64) Validator {
 func Max(max float64) Validator {
 	return func(value interface{}) error {
 		var num float64
-		
+
 		switch v := value.(type) {
 		case int:
 			num = float64(v)
@@ -177,12 +177,11 @@ func Max(max float64) Validator {
 		default:
 			return fmt.Errorf("value must be a number")
 		}
-		
+
 		if num > max {
 			return fmt.Errorf("value must be at most %f", max)
 		}
-		
+
 		return nil
 	}
 }
-

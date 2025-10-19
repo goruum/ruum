@@ -31,27 +31,27 @@ type Application interface {
 
 // ApplicationConfig contains application configuration
 type ApplicationConfig struct {
-	GlobalPrefix      string
-	CorsEnabled       bool
-	CorsOrigins       []string
-	Logger            Logger
-	ShutdownTimeout   time.Duration
+	GlobalPrefix        string
+	CorsEnabled         bool
+	CorsOrigins         []string
+	Logger              Logger
+	ShutdownTimeout     time.Duration
 	EnableShutdownHooks bool
 }
 
 // DefaultApplication implements Application interface
 type DefaultApplication struct {
-	container           Container
-	router              Router
-	server              *http.Server
-	logger              Logger
-	config              ApplicationConfig
-	middleware          []MiddlewareFunc
-	globalGuards        []Guard
-	globalInterceptors  []Interceptor
-	globalPipes         []Pipe
-	globalFilters       []ExceptionFilter
-	shutdownHooks       []func()
+	container          Container
+	router             Router
+	server             *http.Server
+	logger             Logger
+	config             ApplicationConfig
+	middleware         []MiddlewareFunc
+	globalGuards       []Guard
+	globalInterceptors []Interceptor
+	globalPipes        []Pipe
+	globalFilters      []ExceptionFilter
+	shutdownHooks      []func()
 }
 
 // ApplicationFactory creates new applications
@@ -65,29 +65,29 @@ func NewApplicationFactory() *ApplicationFactory {
 // Create creates a new application from a root module
 func (f *ApplicationFactory) Create(rootModule Module, config ApplicationConfig) (Application, error) {
 	container := NewContainer()
-	
+
 	// Configure the root module
 	if err := rootModule.Configure(container); err != nil {
 		return nil, fmt.Errorf("failed to configure root module: %w", err)
 	}
-	
+
 	// Create router
 	router := NewRouter()
-	
+
 	// Register controllers
 	if err := f.registerControllers(rootModule, container, router); err != nil {
 		return nil, fmt.Errorf("failed to register controllers: %w", err)
 	}
-	
+
 	// Set default logger if not provided
 	if config.Logger == nil {
 		config.Logger = NewDefaultLogger()
 	}
-	
+
 	if config.ShutdownTimeout == 0 {
 		config.ShutdownTimeout = 30 * time.Second
 	}
-	
+
 	app := &DefaultApplication{
 		container:          container,
 		router:             router,
@@ -100,12 +100,12 @@ func (f *ApplicationFactory) Create(rootModule Module, config ApplicationConfig)
 		globalFilters:      make([]ExceptionFilter, 0),
 		shutdownHooks:      make([]func(), 0),
 	}
-	
+
 	// Call lifecycle hooks
 	if err := f.callLifecycleHooks(rootModule, container); err != nil {
 		return nil, fmt.Errorf("failed to call lifecycle hooks: %w", err)
 	}
-	
+
 	return app, nil
 }
 
@@ -119,14 +119,14 @@ func (f *ApplicationFactory) registerControllers(module Module, container Contai
 			}
 		}
 	}
-	
+
 	// Register controllers from imported modules
 	for _, importedModule := range module.GetImports() {
 		if err := f.registerControllers(importedModule, container, router); err != nil {
 			return err
 		}
 	}
-	
+
 	return nil
 }
 
@@ -137,56 +137,56 @@ func (f *ApplicationFactory) callLifecycleHooks(module Module, container Contain
 		if err != nil {
 			continue
 		}
-		
+
 		if hook, ok := instance.(OnModuleInit); ok {
 			if err := hook.OnModuleInit(); err != nil {
 				return fmt.Errorf("OnModuleInit failed for %s: %w", name, err)
 			}
 		}
 	}
-	
+
 	return nil
 }
 
 func (a *DefaultApplication) Listen(addr string) error {
 	handler := a.buildHandler()
-	
+
 	a.server = &http.Server{
 		Addr:    addr,
 		Handler: handler,
 	}
-	
+
 	// Setup graceful shutdown
 	if a.config.EnableShutdownHooks {
 		go a.setupGracefulShutdown()
 	}
-	
+
 	a.logger.Info(fmt.Sprintf("🚀 Application is running on: http://%s", addr), nil)
-	
+
 	err := a.server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		return err
 	}
-	
+
 	return nil
 }
 
 func (a *DefaultApplication) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), a.config.ShutdownTimeout)
 	defer cancel()
-	
+
 	// Call shutdown hooks
 	for _, hook := range a.shutdownHooks {
 		hook()
 	}
-	
+
 	// Call OnApplicationShutdown for providers
 	for name := range a.container.GetAll() {
 		instance, err := a.container.Resolve(name)
 		if err != nil {
 			continue
 		}
-		
+
 		if hook, ok := instance.(OnApplicationShutdown); ok {
 			if err := hook.OnApplicationShutdown(); err != nil {
 				a.logger.Error(fmt.Sprintf("OnApplicationShutdown failed for %s", name), map[string]interface{}{
@@ -195,22 +195,22 @@ func (a *DefaultApplication) Close() error {
 			}
 		}
 	}
-	
+
 	if a.server != nil {
 		return a.server.Shutdown(ctx)
 	}
-	
+
 	return nil
 }
 
 func (a *DefaultApplication) setupGracefulShutdown() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	
+
 	<-quit
-	
+
 	a.logger.Info("Shutting down application...", nil)
-	
+
 	if err := a.Close(); err != nil {
 		a.logger.Error("Error during shutdown", map[string]interface{}{
 			"error": err.Error(),
@@ -221,27 +221,27 @@ func (a *DefaultApplication) setupGracefulShutdown() {
 func (a *DefaultApplication) buildHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := NewContext(context.Background(), r, w, a.container)
-		
+
 		// Build handler chain with middleware
 		handler := a.router.ServeHTTP
-		
+
 		// Apply global filters
 		handler = a.applyFilters(handler)
-		
+
 		// Apply global pipes
 		handler = a.applyPipes(handler)
-		
+
 		// Apply global interceptors
 		handler = a.applyInterceptors(handler)
-		
+
 		// Apply global guards
 		handler = a.applyGuards(handler)
-		
+
 		// Apply middleware
 		for i := len(a.middleware) - 1; i >= 0; i-- {
 			handler = a.middleware[i](handler)
 		}
-		
+
 		// Execute handler
 		if err := handler(ctx); err != nil {
 			a.handleError(err, ctx)
@@ -306,7 +306,7 @@ func (a *DefaultApplication) handleError(err error, ctx Context) {
 	if !ok {
 		httpErr = NewHttpException(http.StatusInternalServerError, err.Error())
 	}
-	
+
 	ctx.JSON(httpErr.StatusCode, map[string]interface{}{
 		"statusCode": httpErr.StatusCode,
 		"message":    httpErr.Message,
@@ -365,4 +365,3 @@ func (a *DefaultApplication) GetLogger() Logger {
 func (a *DefaultApplication) SetLogger(logger Logger) {
 	a.logger = logger
 }
-

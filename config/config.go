@@ -43,26 +43,26 @@ func (c *DefaultConfigService) LoadFromFile(filepath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
 	}
-	
+
 	var config map[string]interface{}
 	if err := json.Unmarshal(data, &config); err != nil {
 		return fmt.Errorf("failed to parse config file: %w", err)
 	}
-	
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	for key, value := range config {
 		c.data[key] = value
 	}
-	
+
 	return nil
 }
 
 func (c *DefaultConfigService) Get(key string) interface{} {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	value, exists := c.data[key]
 	if !exists {
 		// Try environment variable
@@ -71,7 +71,7 @@ func (c *DefaultConfigService) Get(key string) interface{} {
 		}
 		return nil
 	}
-	
+
 	return value
 }
 
@@ -80,11 +80,11 @@ func (c *DefaultConfigService) GetString(key string) string {
 	if value == nil {
 		return ""
 	}
-	
+
 	if str, ok := value.(string); ok {
 		return str
 	}
-	
+
 	return fmt.Sprintf("%v", value)
 }
 
@@ -93,7 +93,7 @@ func (c *DefaultConfigService) GetInt(key string) int {
 	if value == nil {
 		return 0
 	}
-	
+
 	switch v := value.(type) {
 	case int:
 		return v
@@ -104,7 +104,7 @@ func (c *DefaultConfigService) GetInt(key string) int {
 			return i
 		}
 	}
-	
+
 	return 0
 }
 
@@ -113,7 +113,7 @@ func (c *DefaultConfigService) GetBool(key string) bool {
 	if value == nil {
 		return false
 	}
-	
+
 	switch v := value.(type) {
 	case bool:
 		return v
@@ -122,26 +122,26 @@ func (c *DefaultConfigService) GetBool(key string) bool {
 	case int:
 		return v != 0
 	}
-	
+
 	return false
 }
 
 func (c *DefaultConfigService) Set(key string, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.data[key] = value
 }
 
 func (c *DefaultConfigService) Has(key string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	_, exists := c.data[key]
 	if exists {
 		return true
 	}
-	
+
 	// Check environment variable
 	return os.Getenv(key) != ""
 }
@@ -180,4 +180,3 @@ func (m *ConfigModule) GetImports() []core.Module {
 func (m *ConfigModule) GetExports() []string {
 	return []string{"config"}
 }
-

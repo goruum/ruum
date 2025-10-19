@@ -95,4 +95,3 @@ func Reduce(slice []interface{}, fn func(interface{}, interface{}) interface{}, 
 	}
 	return result
 }
-
