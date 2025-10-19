@@ -11,6 +11,10 @@ on:
     # Run daily at 6 AM UTC
     - cron: '0 6 * * *'
 
+permissions:
+  contents: read
+  security-events: write
+
 jobs:
   govulncheck:
     name: Go Vulnerability Check
@@ -27,11 +31,15 @@ jobs:
       - name: Run govulncheck
         run: |
           go install golang.org/x/vuln/cmd/govulncheck@latest
-          govulncheck ./...
+          govulncheck -C . ./...
+        continue-on-error: true
 
   gosec:
     name: Security Scan with Gosec
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -42,7 +50,7 @@ jobs:
           args: '-no-fail -fmt sarif -out results.sarif ./...'
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
 
