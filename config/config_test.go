@@ -426,4 +426,3 @@ func TestConfigModule_GetExports(t *testing.T) {
 		t.Errorf("GetExports()[0] = %v, want 'config'", exports[0])
 	}
 }
-

@@ -204,4 +204,3 @@ func TestCreateApplication_MultipleOptions(t *testing.T) {
 		t.Fatal("CreateApplication() returned nil")
 	}
 }
-

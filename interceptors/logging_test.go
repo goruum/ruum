@@ -318,4 +318,3 @@ func TestCacheInterceptor_DifferentPaths(t *testing.T) {
 		t.Error("Handler should be called for different path")
 	}
 }
-

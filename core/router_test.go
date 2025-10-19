@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
 )
 
 func TestNewRouter(t *testing.T) {
@@ -247,18 +249,31 @@ func TestRouter_NestedGroups(t *testing.T) {
 func TestRouter_RouteParams(t *testing.T) {
 	router := NewRouter()
 
+	var capturedID string
 	handler := func(ctx Context) error {
-		// Check if param can be retrieved
-		_ = ctx.Param("id")
+		capturedID = ctx.Param("id")
 		return nil
 	}
 
 	router.Get("/users/{id}", handler)
 
-	// We won't test the actual param extraction since it requires mux internal state
-	// Just verify the route is registered
-	if router == nil {
-		t.Error("Router should not be nil")
+	// Create a request with path parameters
+	req := httptest.NewRequest("GET", "/users/{id}", nil)
+
+	// Set mux vars manually to simulate parameter extraction
+	req = mux.SetURLVars(req, map[string]string{"id": "123"})
+
+	res := httptest.NewRecorder()
+	ctx := NewContext(context.Background(), req, res, NewContainer())
+
+	// Call ServeHTTP to test parameter extraction
+	err := router.ServeHTTP(ctx)
+	if err != nil {
+		t.Errorf("ServeHTTP() error = %v", err)
+	}
+
+	if capturedID != "123" {
+		t.Errorf("Param('id') = %v, want '123'", capturedID)
 	}
 }
 
@@ -356,4 +371,3 @@ func TestRouter_HandlerError(t *testing.T) {
 		t.Errorf("StatusCode = %v, want 400", httpErr.StatusCode)
 	}
 }
-

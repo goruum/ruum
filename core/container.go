@@ -26,8 +26,6 @@ const (
 	ScopeSingleton Scope = "singleton"
 	// ScopeTransient creates a new instance on every request
 	ScopeTransient Scope = "transient"
-	// ScopeRequest creates a new instance per request
-	ScopeRequest   Scope = "request"
 )
 
 // ProviderOption configures a provider

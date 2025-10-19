@@ -16,7 +16,7 @@ test-coverage: test ## Run tests and show coverage
 check-coverage: test ## Check if coverage meets threshold
 	@echo "📊 Checking coverage..."
 	@coverage=$$(go tool cover -func=coverage.out | grep total | awk '{print $$3}' | sed 's/%//'); \
-	threshold=70; \
+	threshold=80; \
 	echo "Coverage: $${coverage}%"; \
 	echo "Threshold: $${threshold}%"; \
 	if [ $$(echo "$${coverage} < $${threshold}" | bc -l) -eq 1 ]; then \
@@ -117,7 +117,7 @@ ci: fmt vet lint test check-coverage security build ## Simulate CI pipeline loca
 	@echo "  ✅ Go vet"
 	@echo "  ✅ Linting"
 	@echo "  ✅ Tests with race detection"
-	@echo "  ✅ Coverage threshold (70%)"
+	@echo "  ✅ Coverage threshold (80%)"
 	@echo "  ✅ Security checks"
 	@echo "  ✅ Build verification"
 	@echo ""

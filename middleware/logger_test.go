@@ -200,4 +200,3 @@ func TestRecovery_WithHandlerError(t *testing.T) {
 		t.Errorf("Handler returned error = %v, want %v", err, expectedErr)
 	}
 }
-

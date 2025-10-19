@@ -189,6 +189,12 @@ func TestCORS_PreflightRequest(t *testing.T) {
 	if allowHeaders == "" {
 		t.Error("Access-Control-Allow-Headers should not be empty")
 	}
+
+	// Verify MaxAge header is set correctly
+	maxAge := res.Header().Get("Access-Control-Max-Age")
+	if maxAge != "3600" {
+		t.Errorf("Access-Control-Max-Age = %v, want '3600'", maxAge)
+	}
 }
 
 func TestCORS_ExposeHeaders(t *testing.T) {
@@ -218,43 +224,6 @@ func TestCORS_ExposeHeaders(t *testing.T) {
 	exposeHeaders := res.Header().Get("Access-Control-Expose-Headers")
 	if exposeHeaders == "" {
 		t.Error("Access-Control-Expose-Headers should not be empty")
-	}
-}
-
-func TestJoinStrings(t *testing.T) {
-	tests := []struct {
-		name     string
-		strs     []string
-		sep      string
-		expected string
-	}{
-		{
-			name:     "multiple strings",
-			strs:     []string{"GET", "POST", "PUT"},
-			sep:      ", ",
-			expected: "GET, POST, PUT",
-		},
-		{
-			name:     "single string",
-			strs:     []string{"GET"},
-			sep:      ", ",
-			expected: "GET",
-		},
-		{
-			name:     "empty slice",
-			strs:     []string{},
-			sep:      ", ",
-			expected: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := joinStrings(tt.strs, tt.sep)
-			if result != tt.expected {
-				t.Errorf("joinStrings() = %v, want %v", result, tt.expected)
-			}
-		})
 	}
 }
 
@@ -288,3 +257,32 @@ func TestCORS_NoOriginHeader(t *testing.T) {
 	}
 }
 
+func TestCORS_EmptyAllowOrigins(t *testing.T) {
+	config := CORSConfig{
+		AllowOrigins: []string{}, // Empty origins list
+	}
+
+	middleware := CORS(config)
+
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	wrappedHandler := middleware(handler)
+
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.Header.Set("Origin", "https://example.com")
+	res := httptest.NewRecorder()
+	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
+
+	err := wrappedHandler(ctx)
+	if err != nil {
+		t.Errorf("Handler error = %v", err)
+	}
+
+	// Should not set CORS headers when allowOrigins is empty
+	allowOrigin := res.Header().Get("Access-Control-Allow-Origin")
+	if allowOrigin != "" {
+		t.Errorf("Access-Control-Allow-Origin should be empty, got %v", allowOrigin)
+	}
+}

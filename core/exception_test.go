@@ -22,7 +22,7 @@ func TestNewHTTPException(t *testing.T) {
 func TestNewHTTPExceptionWithDetails(t *testing.T) {
 	details := map[string]interface{}{"field": "value"}
 	exc := NewHTTPExceptionWithDetails(422, "validation failed", details)
-	
+
 	if exc.StatusCode != 422 {
 		t.Errorf("StatusCode = %v, want 422", exc.StatusCode)
 	}
@@ -128,6 +128,12 @@ func TestDefaultExceptionFilter_Catch(t *testing.T) {
 			expectedStatus: 500,
 			shouldContain:  "http: Server closed",
 		},
+		{
+			name:           "http exception with details",
+			err:            NewHTTPExceptionWithDetails(422, "validation error", map[string]string{"field": "invalid"}),
+			expectedStatus: 422,
+			shouldContain:  "validation error",
+		},
 	}
 
 	for _, tt := range tests {
@@ -147,4 +153,3 @@ func TestDefaultExceptionFilter_Catch(t *testing.T) {
 		})
 	}
 }
-

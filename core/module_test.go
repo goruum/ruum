@@ -285,4 +285,3 @@ func TestBaseModule_Configure_ErrorHandling(t *testing.T) {
 		t.Errorf("Configure() error = %v", err)
 	}
 }
-
