@@ -267,3 +267,63 @@ func TestGracefulShutdownManager_OnShutdown(t *testing.T) {
 	}
 }
 
+func TestLegacyInitWrapper_AfterInit(t *testing.T) {
+	type mockLegacyInit struct {
+		called bool
+	}
+	
+	mockLegacy := &mockLegacyInit{}
+	
+	// Create a proper OnModuleInit implementation
+	hook := onModuleInitFunc(func() error {
+		mockLegacy.called = true
+		return nil
+	})
+	
+	wrapper := legacyInitWrapper{hook: hook}
+	
+	err := wrapper.AfterInit()
+	if err != nil {
+		t.Errorf("AfterInit() returned error: %v", err)
+	}
+	
+	if !mockLegacy.called {
+		t.Error("AfterInit() should have called OnModuleInit")
+	}
+}
+
+// Helper type to implement OnModuleInit
+type onModuleInitFunc func() error
+
+func (f onModuleInitFunc) OnModuleInit() error {
+	return f()
+}
+
+func TestLegacyShutdownWrapper_OnApplicationShutdown(t *testing.T) {
+	called := false
+	
+	// Create a proper OnApplicationShutdown implementation
+	hook := onAppShutdownFunc(func() error {
+		called = true
+		return nil
+	})
+	
+	wrapper := legacyShutdownWrapper{hook: hook}
+	
+	err := wrapper.OnApplicationShutdown(context.Background())
+	if err != nil {
+		t.Errorf("OnApplicationShutdown() returned error: %v", err)
+	}
+	
+	if !called {
+		t.Error("OnApplicationShutdown() should have called the hook")
+	}
+}
+
+// Helper type to implement OnApplicationShutdown
+type onAppShutdownFunc func() error
+
+func (f onAppShutdownFunc) OnApplicationShutdown() error {
+	return f()
+}
+

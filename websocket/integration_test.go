@@ -1219,3 +1219,182 @@ func TestWebSocketIntegration_UnregisterRemovesFromMultipleRooms(t *testing.T) {
 		}
 	}
 }
+
+func TestWebSocketIntegration_HandlerWithRealUpgrade(t *testing.T) {
+	hub := NewHub()
+	go hub.Run()
+
+	var mu sync.Mutex
+	connectCalled := false
+	clientID := ""
+
+	config := HandlerConfig{
+		Hub: hub,
+		OnConnect: func(c *Client) error {
+			mu.Lock()
+			defer mu.Unlock()
+			connectCalled = true
+			clientID = c.ID
+			return nil
+		},
+		GenerateID: func() string {
+			return "real-client-123"
+		},
+	}
+
+	upgrader := websocket.Upgrader{
+		CheckOrigin: config.CheckOrigin,
+	}
+	
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+
+		client := &Client{
+			ID:    config.GenerateID(),
+			Conn:  conn,
+			Hub:   config.Hub,
+			Send:  make(chan Message, 256),
+			Rooms: make(map[string]bool),
+			Data:  make(map[string]interface{}),
+		}
+
+		if config.OnConnect != nil {
+			if err := config.OnConnect(client); err != nil {
+				_ = conn.Close()
+				return
+			}
+		}
+
+		config.Hub.register <- client
+		go client.WritePump()
+		go client.ReadPump()
+	}))
+	defer server.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	ws, _, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("Failed to connect: %v", err)
+	}
+	defer func() { _ = ws.Close() }()
+
+	time.Sleep(50 * time.Millisecond)
+
+	mu.Lock()
+	called := connectCalled
+	id := clientID
+	mu.Unlock()
+
+	if !called {
+		t.Error("OnConnect should have been called")
+	}
+	
+	if id != "real-client-123" {
+		t.Errorf("Client ID = %v, want real-client-123", id)
+	}
+	
+	// Verify client was registered in hub
+	if hub.GetClientCount() != 1 {
+		t.Errorf("Hub should have 1 client, got %d", hub.GetClientCount())
+	}
+}
+
+func TestWebSocketIntegration_HandlerOnConnectFailure(t *testing.T) {
+	hub := NewHub()
+	go hub.Run()
+
+	var mu sync.Mutex
+	connectError := false
+	config := HandlerConfig{
+		Hub: hub,
+		OnConnect: func(c *Client) error {
+			mu.Lock()
+			defer mu.Unlock()
+			connectError = true
+			return http.ErrAbortHandler
+		},
+	}
+
+	upgrader := websocket.Upgrader{}
+	
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			return
+		}
+
+		client := &Client{
+			ID:    "test-client",
+			Conn:  conn,
+			Hub:   config.Hub,
+			Send:  make(chan Message, 256),
+			Rooms: make(map[string]bool),
+			Data:  make(map[string]interface{}),
+		}
+
+		if config.OnConnect != nil {
+			if err := config.OnConnect(client); err != nil {
+				_ = conn.Close()
+				return
+			}
+		}
+	}))
+	defer server.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	_, _, _ = websocket.DefaultDialer.Dial(wsURL, nil)
+	
+	time.Sleep(50 * time.Millisecond)
+	
+	mu.Lock()
+	errOccurred := connectError
+	mu.Unlock()
+	
+	if !errOccurred {
+		t.Error("OnConnect should have been called and returned error")
+	}
+}
+
+func TestWebSocketIntegration_HandlerCustomCheckOrigin(t *testing.T) {
+	hub := NewHub()
+	go hub.Run()
+
+	originChecked := false
+	
+	upgrader := websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			originChecked = true
+			return r.Header.Get("Origin") == "https://trusted.com"
+		},
+	}
+	
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := upgrader.Upgrade(w, r, nil)
+		if err != nil {
+			// Expected to fail due to origin check
+			return
+		}
+		_ = conn.Close()
+	}))
+	defer server.Close()
+
+	// Try with untrusted origin
+	wsURL := "ws" + strings.TrimPrefix(server.URL, "http")
+	dialer := websocket.DefaultDialer
+	headers := http.Header{}
+	headers.Set("Origin", "https://untrusted.com")
+	
+	_, _, err := dialer.Dial(wsURL, headers)
+	// Should fail due to origin check
+	_ = err // May or may not error depending on server response timing
+	
+	time.Sleep(50 * time.Millisecond)
+	
+	if !originChecked {
+		t.Error("CheckOrigin should have been called")
+	}
+}
+

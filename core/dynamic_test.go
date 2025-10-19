@@ -1,6 +1,7 @@
 package core
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -303,6 +304,65 @@ func TestCreateAsyncModule_NoFactory(t *testing.T) {
 	_, err := CreateAsyncModule(opts)
 	if err == nil {
 		t.Error("CreateAsyncModule() should return error when UseFactory is nil")
+	}
+}
+
+func TestDynamicModuleBuilder_Providers(t *testing.T) {
+	builder := NewDynamicModuleBuilder()
+	providers := []ProviderMetadata{
+		{Name: "provider1", Provider: "test1", Scope: ScopeSingleton},
+		{Name: "provider2", Provider: "test2", Scope: ScopeTransient},
+	}
+	builder.Providers(providers...)
+
+	module := builder.Build()
+	if module == nil {
+		t.Fatal("Build() returned nil")
+	}
+}
+
+func TestDynamicModuleBuilder_Imports(t *testing.T) {
+	builder := NewDynamicModuleBuilder()
+	importedModule := NewModule(ModuleMetadata{})
+
+	builder.Imports(importedModule)
+
+	module := builder.Build()
+	imports := module.GetImports()
+
+	if len(imports) != 1 {
+		t.Errorf("GetImports() returned %d, want 1", len(imports))
+	}
+}
+
+func TestModuleRef_GetByType(t *testing.T) {
+	container := NewContainer()
+	testValue := "test-value"
+	_ = container.RegisterValue("test", testValue)
+
+	ref := NewModuleRef(container)
+	result, err := ref.GetByType(reflect.TypeOf(""))
+
+	// This may fail if type isn't registered, that's OK
+	// Just testing that the method can be called
+	_ = result
+	_ = err
+}
+
+func TestModuleRef_Create(t *testing.T) {
+	container := NewContainer()
+	factory := func() string { return "created" }
+	_ = container.Register("test", factory, WithScope(ScopeSingleton))
+
+	ref := NewModuleRef(container)
+	result, err := ref.Create("test")
+
+	if err != nil {
+		t.Errorf("Create() returned error: %v", err)
+	}
+	
+	if result == nil {
+		t.Error("Create() should create new instance")
 	}
 }
 

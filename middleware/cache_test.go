@@ -89,3 +89,36 @@ func TestCache(t *testing.T) {
 	})
 }
 
+func TestCacheStore_Cleanup(t *testing.T) {
+	store := newCacheStore()
+	
+	// Add entries that will expire
+	store.Set("key1", &CacheEntry{
+		StatusCode: 200,
+		Body:       []byte("value1"),
+		Headers:    make(map[string][]string),
+		Expiration: time.Now().Add(time.Millisecond * 50),
+	})
+	store.Set("key2", &CacheEntry{
+		StatusCode: 200,
+		Body:       []byte("value2"),
+		Headers:    make(map[string][]string),
+		Expiration: time.Now().Add(time.Second * 10),
+	})
+	
+	// Wait for cleanup to run and remove expired entries
+	time.Sleep(time.Millisecond * 150)
+	
+	// key1 should be cleaned up
+	_, found := store.Get("key1")
+	if found {
+		t.Error("Expired entry should have been cleaned up")
+	}
+	
+	// key2 should still exist
+	_, found = store.Get("key2")
+	if !found {
+		t.Error("Non-expired entry should still exist")
+	}
+}
+

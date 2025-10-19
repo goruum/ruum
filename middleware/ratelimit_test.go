@@ -95,3 +95,37 @@ func TestRateLimiter_Skip(t *testing.T) {
 	}
 }
 
+func TestRateLimiter_Cleanup(t *testing.T) {
+	config := DefaultRateLimiterConfig()
+	config.RequestsPerWindow = 10
+	config.Window = time.Millisecond * 50
+	
+	limiter := RateLimiter(config)
+	
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+	
+	// Make a request to create an entry
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.RemoteAddr = "192.168.1.1:1234"
+	res := httptest.NewRecorder()
+	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
+	
+	_ = limiter(handler)(ctx)
+	
+	// Wait for cleanup to potentially run and clean up expired entries
+	time.Sleep(time.Millisecond * 150)
+	
+	// Make another request - should work as old entry should be cleaned
+	req2 := httptest.NewRequest("GET", "/test", nil)
+	req2.RemoteAddr = "192.168.1.1:1234"
+	res2 := httptest.NewRecorder()
+	ctx2 := core.NewContext(context.Background(), req2, res2, core.NewContainer())
+	
+	err := limiter(handler)(ctx2)
+	if err != nil {
+		t.Errorf("Request after cleanup failed: %v", err)
+	}
+}
+

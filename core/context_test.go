@@ -919,3 +919,28 @@ func TestConfigModule_GetBool_NotBool_ReturnsFalse(t *testing.T) {
 	}
 }
 
+func TestDefaultContext_Cookie(t *testing.T) {
+	// Test getting a cookie that exists
+	req := httptest.NewRequest("GET", "/test", nil)
+	req.AddCookie(&http.Cookie{Name: "session", Value: "abc123"})
+	res := httptest.NewRecorder()
+	ctx := NewContext(context.Background(), req, res, NewContainer())
+
+	cookie, err := ctx.Cookie("session")
+	if err != nil {
+		t.Fatalf("Cookie() returned error: %v", err)
+	}
+	if cookie.Name != "session" {
+		t.Errorf("Cookie name = %v, want 'session'", cookie.Name)
+	}
+	if cookie.Value != "abc123" {
+		t.Errorf("Cookie value = %v, want 'abc123'", cookie.Value)
+	}
+
+	// Test getting a cookie that doesn't exist
+	_, err = ctx.Cookie("nonexistent")
+	if err == nil {
+		t.Error("Cookie() should return error for nonexistent cookie")
+	}
+}
+
