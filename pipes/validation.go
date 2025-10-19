@@ -2,10 +2,21 @@
 package pipes
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 
 	"github.com/goruum/ruum/core"
+)
+
+const (
+	// ErrValueRequired is the error message for required validation
+	ErrValueRequired = "value is required"
+)
+
+var (
+	// ErrRequired is the error returned when a value is required
+	ErrRequired = errors.New(ErrValueRequired)
 )
 
 // ValidationPipe validates and transforms input data
@@ -106,16 +117,16 @@ func (p *DefaultValuePipe) Transform(value interface{}, _ *core.ArgumentMetadata
 func Required() Validator {
 	return func(value interface{}) error {
 		if value == nil {
-			return fmt.Errorf("value is required")
+			return ErrRequired
 		}
 
 		v := reflect.ValueOf(value)
 		if v.Kind() == reflect.Ptr && v.IsNil() {
-			return fmt.Errorf("value is required")
+			return ErrRequired
 		}
 
 		if v.Kind() == reflect.String && v.Len() == 0 {
-			return fmt.Errorf("value is required")
+			return ErrRequired
 		}
 
 		return nil
