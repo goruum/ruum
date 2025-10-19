@@ -28,13 +28,27 @@ check-coverage: test ## Check if coverage meets threshold
 
 lint: ## Run linter
 	@echo "🔍 Running linter..."
-	@golangci-lint run
-	@echo "✅ Linting completed"
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run; \
+		echo "✅ Linting completed"; \
+	else \
+		echo "⚠️  golangci-lint not found. Install it with:"; \
+		echo "   brew install golangci-lint"; \
+		echo "   or: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+		exit 1; \
+	fi
 
 lint-fix: ## Run linter and fix issues
 	@echo "🔧 Running linter with auto-fix..."
-	@golangci-lint run --fix
-	@echo "✅ Auto-fix completed"
+	@if command -v golangci-lint >/dev/null 2>&1; then \
+		golangci-lint run --fix; \
+		echo "✅ Auto-fix completed"; \
+	else \
+		echo "⚠️  golangci-lint not found. Install it with:"; \
+		echo "   brew install golangci-lint"; \
+		echo "   or: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"; \
+		exit 1; \
+	fi
 
 security: ## Run security checks
 	@echo "🔒 Running security checks..."
@@ -94,13 +108,13 @@ run-advanced: ## Run advanced example
 	@echo "🚀 Running advanced example..."
 	@cd examples/advanced && go run main.go
 
-# Pre-commit hook - tüm kontroller
+# Pre-commit hook - all checks
 pre-commit: fmt vet lint test check-coverage security build ## Run all checks before commit
 	@echo ""
 	@echo "✅ All pre-commit checks passed!"
 	@echo "🚀 Ready to commit"
 
-# CI/CD simülasyonu
+# CI/CD simulation
 ci: fmt vet lint test check-coverage security build ## Simulate CI pipeline locally
 	@echo ""
 	@echo "========================================"

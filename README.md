@@ -342,7 +342,7 @@ return core.NotFoundException("Resource not found")
 return core.InternalServerErrorException("Server error")
 
 // Custom exception with details
-return core.NewHttpExceptionWithDetails(
+return core.NewHTTPExceptionWithDetails(
     422,
     "Validation failed",
     map[string]interface{}{

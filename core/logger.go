@@ -13,6 +13,7 @@ func NewDefaultLogger() Logger {
 	return &SimpleLogger{}
 }
 
+// Log logs a message at the specified level.
 func (l *SimpleLogger) Log(level string, message string, fields map[string]interface{}) {
 	timestamp := time.Now().Format(time.RFC3339)
 	fmt.Printf("[%s] %s %s", level, timestamp, message)
@@ -22,14 +23,17 @@ func (l *SimpleLogger) Log(level string, message string, fields map[string]inter
 	fmt.Println()
 }
 
+// Debug logs a debug message.
 func (l *SimpleLogger) Debug(message string, fields map[string]interface{}) {
 	l.Log("DEBUG", message, fields)
 }
 
+// Info logs an info message.
 func (l *SimpleLogger) Info(message string, fields map[string]interface{}) {
 	l.Log("INFO", message, fields)
 }
 
+// Warn logs a warning message.
 func (l *SimpleLogger) Warn(message string, fields map[string]interface{}) {
 	l.Log("WARN", message, fields)
 }

@@ -30,6 +30,7 @@ func NewModule(metadata ModuleMetadata) Module {
 	}
 }
 
+// Configure registers providers in the DI container.
 func (m *BaseModule) Configure(container Container) error {
 	// Register providers
 	for _, providerMeta := range m.metadata.Providers {
@@ -53,10 +54,12 @@ func (m *BaseModule) Configure(container Container) error {
 	return nil
 }
 
+// GetControllers returns the module's controllers.
 func (m *BaseModule) GetControllers() []interface{} {
 	return m.metadata.Controllers
 }
 
+// GetProviders returns the module's providers.
 func (m *BaseModule) GetProviders() []interface{} {
 	providers := make([]interface{}, len(m.metadata.Providers))
 	for i, p := range m.metadata.Providers {
@@ -65,10 +68,12 @@ func (m *BaseModule) GetProviders() []interface{} {
 	return providers
 }
 
+// GetImports returns the imported modules.
 func (m *BaseModule) GetImports() []Module {
 	return m.metadata.Imports
 }
 
+// GetExports returns the exported provider names.
 func (m *BaseModule) GetExports() []string {
 	return m.metadata.Exports
 }

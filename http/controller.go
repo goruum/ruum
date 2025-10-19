@@ -1,3 +1,4 @@
+// Package http provides HTTP controller utilities.
 package http
 
 import (
@@ -157,7 +158,7 @@ func (c *BaseController) applyInterceptors(handler core.HandlerFunc, interceptor
 	return result
 }
 
-func (c *BaseController) applyPipes(handler core.HandlerFunc, pipes []core.Pipe) core.HandlerFunc {
+func (c *BaseController) applyPipes(handler core.HandlerFunc, _ []core.Pipe) core.HandlerFunc {
 	return func(ctx core.Context) error {
 		// Pipes are typically applied at parameter level
 		// This is a placeholder for route-level pipe application

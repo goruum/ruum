@@ -20,9 +20,13 @@ type Container interface {
 // Scope defines the lifecycle of a provider
 type Scope string
 
+// Provider scopes
 const (
+	// ScopeSingleton creates a single instance shared across the application
 	ScopeSingleton Scope = "singleton"
+	// ScopeTransient creates a new instance on every request
 	ScopeTransient Scope = "transient"
+	// ScopeRequest creates a new instance per request
 	ScopeRequest   Scope = "request"
 )
 
@@ -81,6 +85,7 @@ func NewContainer() Container {
 	}
 }
 
+// Register registers a provider with the given name and options.
 func (c *DefaultContainer) Register(name string, providerFunc interface{}, opts ...ProviderOption) error {
 	config := &providerConfig{
 		scope: ScopeSingleton,
@@ -117,6 +122,7 @@ func (c *DefaultContainer) Register(name string, providerFunc interface{}, opts 
 	return nil
 }
 
+// RegisterFactory registers a factory function.
 func (c *DefaultContainer) RegisterFactory(name string, factory interface{}, opts ...ProviderOption) error {
 	config := &providerConfig{
 		scope: ScopeTransient,
@@ -140,6 +146,7 @@ func (c *DefaultContainer) RegisterFactory(name string, factory interface{}, opt
 	return nil
 }
 
+// RegisterValue registers a static value.
 func (c *DefaultContainer) RegisterValue(name string, value interface{}) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -161,6 +168,7 @@ func (c *DefaultContainer) RegisterValue(name string, value interface{}) error {
 	return nil
 }
 
+// Resolve resolves a provider by name.
 func (c *DefaultContainer) Resolve(name string) (interface{}, error) {
 	c.mu.RLock()
 	p, exists := c.providers[name]
@@ -173,6 +181,7 @@ func (c *DefaultContainer) Resolve(name string) (interface{}, error) {
 	return c.resolveProvider(p)
 }
 
+// ResolveByType resolves a provider by type.
 func (c *DefaultContainer) ResolveByType(t reflect.Type) (interface{}, error) {
 	c.mu.RLock()
 	name, exists := c.typeMap[t]
@@ -260,6 +269,7 @@ func (c *DefaultContainer) invokeFactory(factory interface{}) (interface{}, erro
 	return results[0].Interface(), nil
 }
 
+// Has checks if a provider exists.
 func (c *DefaultContainer) Has(name string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -267,6 +277,7 @@ func (c *DefaultContainer) Has(name string) bool {
 	return exists
 }
 
+// GetAll returns all registered providers.
 func (c *DefaultContainer) GetAll() map[string]interface{} {
 	c.mu.RLock()
 	defer c.mu.RUnlock()

@@ -1,3 +1,4 @@
+// Package logger provides logging functionality for the application.
 package logger
 
 import (
@@ -12,10 +13,15 @@ import (
 // LogLevel represents the severity of a log message
 type LogLevel string
 
+// Log levels
 const (
+	// LevelDebug is for debug messages
 	LevelDebug LogLevel = "DEBUG"
+	// LevelInfo is for informational messages
 	LevelInfo  LogLevel = "INFO"
+	// LevelWarn is for warning messages
 	LevelWarn  LogLevel = "WARN"
+	// LevelError is for error messages
 	LevelError LogLevel = "ERROR"
 )
 
@@ -45,6 +51,7 @@ func (l *DefaultLogger) SetColorize(colorize bool) {
 	l.colorize = colorize
 }
 
+// Log logs a message at the specified level with optional fields.
 func (l *DefaultLogger) Log(level string, message string, fields map[string]interface{}) {
 	logLevel := LogLevel(level)
 	if !l.shouldLog(logLevel) {
@@ -56,22 +63,25 @@ func (l *DefaultLogger) Log(level string, message string, fields map[string]inte
 	if l.colorize {
 		color := l.getColor(logLevel)
 		reset := "\033[0m"
-		fmt.Fprintf(os.Stdout, "%s[%s]%s %s %s %s\n",
+		_, _ = fmt.Fprintf(os.Stdout, "%s[%s]%s %s %s %s\n",
 			color, logLevel, reset, timestamp, message, l.formatFields(fields))
 	} else {
-		fmt.Fprintf(os.Stdout, "[%s] %s %s %s\n",
+		_, _ = fmt.Fprintf(os.Stdout, "[%s] %s %s %s\n",
 			logLevel, timestamp, message, l.formatFields(fields))
 	}
 }
 
+// Debug logs a debug message.
 func (l *DefaultLogger) Debug(message string, fields map[string]interface{}) {
 	l.Log(string(LevelDebug), message, fields)
 }
 
+// Info logs an info message.
 func (l *DefaultLogger) Info(message string, fields map[string]interface{}) {
 	l.Log(string(LevelInfo), message, fields)
 }
 
+// Warn logs a warning message.
 func (l *DefaultLogger) Warn(message string, fields map[string]interface{}) {
 	l.Log(string(LevelWarn), message, fields)
 }
@@ -116,6 +126,7 @@ func (l *DefaultLogger) formatFields(fields map[string]interface{}) string {
 }
 
 // LoggerModule provides logger as a module
+// LoggerModule provides logging services.
 type LoggerModule struct {
 	logger core.Logger
 }
@@ -130,22 +141,27 @@ func NewLoggerModule(logger core.Logger) *LoggerModule {
 	}
 }
 
+// Configure registers the logger in the container.
 func (m *LoggerModule) Configure(container core.Container) error {
 	return container.RegisterValue("logger", m.logger)
 }
 
+// GetControllers returns the module's controllers.
 func (m *LoggerModule) GetControllers() []interface{} {
 	return []interface{}{}
 }
 
+// GetProviders returns the module's providers.
 func (m *LoggerModule) GetProviders() []interface{} {
 	return []interface{}{m.logger}
 }
 
+// GetImports returns the imported modules.
 func (m *LoggerModule) GetImports() []core.Module {
 	return []core.Module{}
 }
 
+// GetExports returns the exported provider names.
 func (m *LoggerModule) GetExports() []string {
 	return []string{"logger"}
 }

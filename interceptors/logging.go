@@ -1,3 +1,4 @@
+// Package interceptors provides request/response interceptors.
 package interceptors
 
 import (
@@ -18,6 +19,7 @@ func NewLoggingInterceptor(logger core.Logger) *LoggingInterceptor {
 	}
 }
 
+// Intercept logs the request and response details.
 func (i *LoggingInterceptor) Intercept(ctx core.Context, next core.HandlerFunc) error {
 	start := time.Now()
 
@@ -51,6 +53,7 @@ func NewTransformInterceptor(fn func(interface{}) interface{}) *TransformInterce
 	}
 }
 
+// Intercept transforms the response.
 func (i *TransformInterceptor) Intercept(ctx core.Context, next core.HandlerFunc) error {
 	// Execute handler
 	err := next(ctx)
@@ -79,6 +82,7 @@ func NewCacheInterceptor(ttl time.Duration) *CacheInterceptor {
 	}
 }
 
+// Intercept caches the response.
 func (i *CacheInterceptor) Intercept(ctx core.Context, next core.HandlerFunc) error {
 	// Generate cache key
 	key := ctx.Request().Method + ":" + ctx.Request().URL.Path

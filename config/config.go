@@ -1,3 +1,4 @@
+// Package config provides configuration management for the application.
 package config
 
 import (
@@ -24,21 +25,19 @@ func NewConfigService() *DefaultConfigService {
 }
 
 // LoadFromEnv loads configuration from environment variables
-func (c *DefaultConfigService) LoadFromEnv(prefix string) error {
+func (c *DefaultConfigService) LoadFromEnv(_ string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	for range os.Environ() {
-		// Parse environment variable
-		// In a real implementation, you'd parse key=value pairs
-		// and filter by prefix
-	}
+	// In a real implementation, you'd parse key=value pairs from os.Environ()
+	// and filter by prefix, then set them in the config
 
 	return nil
 }
 
 // LoadFromFile loads configuration from a JSON file
 func (c *DefaultConfigService) LoadFromFile(filepath string) error {
+	// #nosec G304 -- filepath is controlled by the user intentionally
 	data, err := os.ReadFile(filepath)
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %w", err)
@@ -59,6 +58,7 @@ func (c *DefaultConfigService) LoadFromFile(filepath string) error {
 	return nil
 }
 
+// Get retrieves a configuration value by key.
 func (c *DefaultConfigService) Get(key string) interface{} {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -75,6 +75,7 @@ func (c *DefaultConfigService) Get(key string) interface{} {
 	return value
 }
 
+// GetString retrieves a string configuration value.
 func (c *DefaultConfigService) GetString(key string) string {
 	value := c.Get(key)
 	if value == nil {
@@ -88,6 +89,7 @@ func (c *DefaultConfigService) GetString(key string) string {
 	return fmt.Sprintf("%v", value)
 }
 
+// GetInt retrieves an integer configuration value.
 func (c *DefaultConfigService) GetInt(key string) int {
 	value := c.Get(key)
 	if value == nil {
@@ -108,6 +110,7 @@ func (c *DefaultConfigService) GetInt(key string) int {
 	return 0
 }
 
+// GetBool retrieves a boolean configuration value.
 func (c *DefaultConfigService) GetBool(key string) bool {
 	value := c.Get(key)
 	if value == nil {
@@ -126,6 +129,7 @@ func (c *DefaultConfigService) GetBool(key string) bool {
 	return false
 }
 
+// Set stores a configuration value.
 func (c *DefaultConfigService) Set(key string, value interface{}) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -133,6 +137,7 @@ func (c *DefaultConfigService) Set(key string, value interface{}) {
 	c.data[key] = value
 }
 
+// Has checks if a configuration key exists.
 func (c *DefaultConfigService) Has(key string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -147,6 +152,7 @@ func (c *DefaultConfigService) Has(key string) bool {
 }
 
 // ConfigModule provides configuration as a module
+// ConfigModule provides configuration services.
 type ConfigModule struct {
 	config core.ConfigService
 }
@@ -161,22 +167,27 @@ func NewConfigModule(config core.ConfigService) *ConfigModule {
 	}
 }
 
+// Configure registers the config service in the container.
 func (m *ConfigModule) Configure(container core.Container) error {
 	return container.RegisterValue("config", m.config)
 }
 
+// GetControllers returns the module's controllers.
 func (m *ConfigModule) GetControllers() []interface{} {
 	return []interface{}{}
 }
 
+// GetProviders returns the module's providers.
 func (m *ConfigModule) GetProviders() []interface{} {
 	return []interface{}{m.config}
 }
 
+// GetImports returns the imported modules.
 func (m *ConfigModule) GetImports() []core.Module {
 	return []core.Module{}
 }
 
+// GetExports returns the exported provider names.
 func (m *ConfigModule) GetExports() []string {
 	return []string{"config"}
 }

@@ -1,3 +1,5 @@
+// Package core provides the main application framework components including
+// the application factory, lifecycle management, and HTTP server setup.
 package core
 
 import (
@@ -109,7 +111,7 @@ func (f *ApplicationFactory) Create(rootModule Module, config ApplicationConfig)
 	return app, nil
 }
 
-func (f *ApplicationFactory) registerControllers(module Module, container Container, router Router) error {
+func (f *ApplicationFactory) registerControllers(module Module, _ Container, router Router) error {
 	// Register controllers from this module
 	controllers := module.GetControllers()
 	for _, ctrl := range controllers {
@@ -122,7 +124,8 @@ func (f *ApplicationFactory) registerControllers(module Module, container Contai
 
 	// Register controllers from imported modules
 	for _, importedModule := range module.GetImports() {
-		if err := f.registerControllers(importedModule, container, router); err != nil {
+		var nilContainer Container
+		if err := f.registerControllers(importedModule, nilContainer, router); err != nil {
 			return err
 		}
 	}
@@ -130,10 +133,10 @@ func (f *ApplicationFactory) registerControllers(module Module, container Contai
 	return nil
 }
 
-func (f *ApplicationFactory) callLifecycleHooks(module Module, container Container) error {
+func (f *ApplicationFactory) callLifecycleHooks(_ Module, cnt Container) error {
 	// Call OnModuleInit for providers
-	for name := range container.GetAll() {
-		instance, err := container.Resolve(name)
+	for name := range cnt.GetAll() {
+		instance, err := cnt.Resolve(name)
 		if err != nil {
 			continue
 		}
@@ -148,12 +151,14 @@ func (f *ApplicationFactory) callLifecycleHooks(module Module, container Contain
 	return nil
 }
 
+// Listen starts the HTTP server on the specified address.
 func (a *DefaultApplication) Listen(addr string) error {
 	handler := a.buildHandler()
 
 	a.server = &http.Server{
-		Addr:    addr,
-		Handler: handler,
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	// Setup graceful shutdown
@@ -171,6 +176,7 @@ func (a *DefaultApplication) Listen(addr string) error {
 	return nil
 }
 
+// Close gracefully shuts down the application.
 func (a *DefaultApplication) Close() error {
 	ctx, cancel := context.WithTimeout(context.Background(), a.config.ShutdownTimeout)
 	defer cancel()
@@ -257,7 +263,7 @@ func (a *DefaultApplication) applyGuards(next HandlerFunc) HandlerFunc {
 				return err
 			}
 			if !allowed {
-				return NewHttpException(http.StatusForbidden, "Forbidden")
+				return NewHTTPException(http.StatusForbidden, "Forbidden")
 			}
 		}
 		return next(ctx)
@@ -302,66 +308,79 @@ func (a *DefaultApplication) applyFilters(next HandlerFunc) HandlerFunc {
 }
 
 func (a *DefaultApplication) handleError(err error, ctx Context) {
-	httpErr, ok := err.(*HttpException)
+	httpErr, ok := err.(*HTTPException)
 	if !ok {
-		httpErr = NewHttpException(http.StatusInternalServerError, err.Error())
+		httpErr = NewHTTPException(http.StatusInternalServerError, err.Error())
 	}
-
-	ctx.JSON(httpErr.StatusCode, map[string]interface{}{
+	
+	_ = ctx.JSON(httpErr.StatusCode, map[string]interface{}{
 		"statusCode": httpErr.StatusCode,
 		"message":    httpErr.Message,
 		"error":      http.StatusText(httpErr.StatusCode),
 	})
 }
 
+// Use adds global middleware to the application.
 func (a *DefaultApplication) Use(middleware ...MiddlewareFunc) {
 	a.middleware = append(a.middleware, middleware...)
 }
 
+// UseGlobalGuards adds global guards to all routes.
 func (a *DefaultApplication) UseGlobalGuards(guards ...Guard) {
 	a.globalGuards = append(a.globalGuards, guards...)
 }
 
+// UseGlobalInterceptors adds global interceptors to all routes.
 func (a *DefaultApplication) UseGlobalInterceptors(interceptors ...Interceptor) {
 	a.globalInterceptors = append(a.globalInterceptors, interceptors...)
 }
 
+// UseGlobalPipes adds global pipes for validation and transformation.
 func (a *DefaultApplication) UseGlobalPipes(pipes ...Pipe) {
 	a.globalPipes = append(a.globalPipes, pipes...)
 }
 
+// UseGlobalFilters adds global exception filters.
 func (a *DefaultApplication) UseGlobalFilters(filters ...ExceptionFilter) {
 	a.globalFilters = append(a.globalFilters, filters...)
 }
 
+// Get registers a GET route.
 func (a *DefaultApplication) Get(path string, handler HandlerFunc) {
 	a.router.Get(path, handler)
 }
 
+// Post registers a POST route.
 func (a *DefaultApplication) Post(path string, handler HandlerFunc) {
 	a.router.Post(path, handler)
 }
 
+// Put registers a PUT route.
 func (a *DefaultApplication) Put(path string, handler HandlerFunc) {
 	a.router.Put(path, handler)
 }
 
+// Delete registers a DELETE route.
 func (a *DefaultApplication) Delete(path string, handler HandlerFunc) {
 	a.router.Delete(path, handler)
 }
 
+// Patch registers a PATCH route.
 func (a *DefaultApplication) Patch(path string, handler HandlerFunc) {
 	a.router.Patch(path, handler)
 }
 
+// GetContainer returns the dependency injection container.
 func (a *DefaultApplication) GetContainer() Container {
 	return a.container
 }
 
+// GetLogger returns the application logger.
 func (a *DefaultApplication) GetLogger() Logger {
 	return a.logger
 }
 
+// SetLogger sets the application logger.
 func (a *DefaultApplication) SetLogger(logger Logger) {
 	a.logger = logger
 }

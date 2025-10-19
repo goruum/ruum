@@ -1,3 +1,4 @@
+// Package pipes provides data transformation and validation pipes.
 package pipes
 
 import (
@@ -22,7 +23,8 @@ func NewValidationPipe(validators ...Validator) *ValidationPipe {
 	}
 }
 
-func (p *ValidationPipe) Transform(value interface{}, metadata *core.ArgumentMetadata) (interface{}, error) {
+// Transform validates the value using the configured validators.
+func (p *ValidationPipe) Transform(value interface{}, _ *core.ArgumentMetadata) (interface{}, error) {
 	for _, validator := range p.validators {
 		if err := validator(value); err != nil {
 			return nil, core.BadRequestException(err.Error())
@@ -34,11 +36,13 @@ func (p *ValidationPipe) Transform(value interface{}, metadata *core.ArgumentMet
 // ParseIntPipe parses a string to int
 type ParseIntPipe struct{}
 
+// NewParseIntPipe creates a new integer parsing pipe.
 func NewParseIntPipe() *ParseIntPipe {
 	return &ParseIntPipe{}
 }
 
-func (p *ParseIntPipe) Transform(value interface{}, metadata *core.ArgumentMetadata) (interface{}, error) {
+// Transform parses a string value to an integer.
+func (p *ParseIntPipe) Transform(value interface{}, _ *core.ArgumentMetadata) (interface{}, error) {
 	str, ok := value.(string)
 	if !ok {
 		return nil, core.BadRequestException("Value must be a string")
@@ -56,11 +60,13 @@ func (p *ParseIntPipe) Transform(value interface{}, metadata *core.ArgumentMetad
 // ParseBoolPipe parses a string to bool
 type ParseBoolPipe struct{}
 
+// NewParseBoolPipe creates a new boolean parsing pipe.
 func NewParseBoolPipe() *ParseBoolPipe {
 	return &ParseBoolPipe{}
 }
 
-func (p *ParseBoolPipe) Transform(value interface{}, metadata *core.ArgumentMetadata) (interface{}, error) {
+// Transform parses a string value to a boolean.
+func (p *ParseBoolPipe) Transform(value interface{}, _ *core.ArgumentMetadata) (interface{}, error) {
 	str, ok := value.(string)
 	if !ok {
 		return nil, core.BadRequestException("Value must be a string")
@@ -81,20 +87,22 @@ type DefaultValuePipe struct {
 	defaultValue interface{}
 }
 
+// NewDefaultValuePipe creates a pipe that provides default values.
 func NewDefaultValuePipe(defaultValue interface{}) *DefaultValuePipe {
 	return &DefaultValuePipe{
 		defaultValue: defaultValue,
 	}
 }
 
-func (p *DefaultValuePipe) Transform(value interface{}, metadata *core.ArgumentMetadata) (interface{}, error) {
+// Transform returns the default value if the input is nil.
+func (p *DefaultValuePipe) Transform(value interface{}, _ *core.ArgumentMetadata) (interface{}, error) {
 	if value == nil || (reflect.ValueOf(value).Kind() == reflect.Ptr && reflect.ValueOf(value).IsNil()) {
 		return p.defaultValue, nil
 	}
 	return value, nil
 }
 
-// Common validators
+// Required validates that a value is not nil or empty.
 func Required() Validator {
 	return func(value interface{}) error {
 		if value == nil {
@@ -114,37 +122,40 @@ func Required() Validator {
 	}
 }
 
-func MinLength(min int) Validator {
+// MinLength validates that a string has at least minLen characters.
+func MinLength(minLen int) Validator {
 	return func(value interface{}) error {
 		str, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("value must be a string")
 		}
 
-		if len(str) < min {
-			return fmt.Errorf("value must be at least %d characters", min)
+		if len(str) < minLen {
+			return fmt.Errorf("value must be at least %d characters", minLen)
 		}
 
 		return nil
 	}
 }
 
-func MaxLength(max int) Validator {
+// MaxLength validates that a string has at most maxLen characters.
+func MaxLength(maxLen int) Validator {
 	return func(value interface{}) error {
 		str, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("value must be a string")
 		}
 
-		if len(str) > max {
-			return fmt.Errorf("value must be at most %d characters", max)
+		if len(str) > maxLen {
+			return fmt.Errorf("value must be at most %d characters", maxLen)
 		}
 
 		return nil
 	}
 }
 
-func Min(min float64) Validator {
+// Min validates that a number is at least minVal.
+func Min(minVal float64) Validator {
 	return func(value interface{}) error {
 		var num float64
 
@@ -157,15 +168,16 @@ func Min(min float64) Validator {
 			return fmt.Errorf("value must be a number")
 		}
 
-		if num < min {
-			return fmt.Errorf("value must be at least %f", min)
+		if num < minVal {
+			return fmt.Errorf("value must be at least %f", minVal)
 		}
 
 		return nil
 	}
 }
 
-func Max(max float64) Validator {
+// Max validates that a number is at most maxVal.
+func Max(maxVal float64) Validator {
 	return func(value interface{}) error {
 		var num float64
 
@@ -178,8 +190,8 @@ func Max(max float64) Validator {
 			return fmt.Errorf("value must be a number")
 		}
 
-		if num > max {
-			return fmt.Errorf("value must be at most %f", max)
+		if num > maxVal {
+			return fmt.Errorf("value must be at most %f", maxVal)
 		}
 
 		return nil

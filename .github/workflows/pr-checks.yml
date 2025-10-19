@@ -7,7 +7,7 @@ on:
       - develop
 
 jobs:
-  # PR'lar merge olmadan önce bu kontroller geçmeli
+  # PRs must pass these checks before merging
   validate:
     name: Validate PR
     runs-on: ubuntu-latest

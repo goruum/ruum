@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  # Quality gates - Release sadece bunlar başarılı olursa yapılır
+  # Quality gates - Release only happens if these pass
   quality-check:
     name: Quality Gates
     runs-on: ubuntu-latest
@@ -75,7 +75,7 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
-  # Release sadece quality gates başarılı olursa çalışır
+  # Release only runs if quality gates pass
   release:
     name: Semantic Release
     needs: quality-check

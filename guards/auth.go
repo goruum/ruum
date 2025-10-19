@@ -1,3 +1,4 @@
+// Package guards provides request guards for authorization.
 package guards
 
 import (
@@ -32,6 +33,7 @@ func (g *AuthGuard) WithTokenType(tokenType string) *AuthGuard {
 	return g
 }
 
+// CanActivate checks if the request has valid authentication.
 func (g *AuthGuard) CanActivate(ctx core.Context) (bool, error) {
 	authHeader := ctx.Header(g.headerKey)
 
@@ -71,6 +73,7 @@ func NewRolesGuard(roles ...string) *RolesGuard {
 	}
 }
 
+// CanActivate checks if the request has required roles.
 func (g *RolesGuard) CanActivate(ctx core.Context) (bool, error) {
 	// Get user roles from context (should be set by auth middleware)
 	userRoles, ok := ctx.Get("user_roles").([]string)

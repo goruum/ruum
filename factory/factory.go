@@ -1,3 +1,4 @@
+// Package factory provides application factory utilities.
 package factory
 
 import (
