@@ -4,7 +4,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.23+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square&logo=opensourceinitiative&logoColor=white)](LICENSE)
-[![Documentation](https://img.shields.io/badge/Documentation-pkg.go.dev-007d9c?style=flat-square&logo=go&logoColor=white)](https://pkg.go.dev/github.com/goruum/ruum)
+[![Go Reference](https://pkg.go.dev/badge/github.com/goruum/ruum.svg)](https://pkg.go.dev/github.com/goruum/ruum)
 [![Release](https://img.shields.io/github/v/release/goruum/ruum?style=flat-square&label=Release&color=blue&logo=github&logoColor=white)](https://github.com/goruum/ruum/releases)
 [![CI](https://img.shields.io/github/actions/workflow/status/goruum/ruum/test.yml?branch=main&style=flat-square&label=CI&logo=githubactions&logoColor=white)](https://github.com/goruum/ruum/actions/workflows/test.yml)
 [![Coverage](https://img.shields.io/codecov/c/github/goruum/ruum?style=flat-square&label=Coverage&logo=codecov&logoColor=white)](https://codecov.io/gh/goruum/ruum)
