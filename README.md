@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square&logo=opensourceinitiative&logoColor=white)](LICENSE)
 [![Documentation](https://img.shields.io/badge/Documentation-pkg.go.dev-007d9c?style=flat-square&logo=go&logoColor=white)](https://pkg.go.dev/github.com/goruum/ruum)
 [![Release](https://img.shields.io/github/v/release/goruum/ruum?style=flat-square&label=Release&color=blue&logo=github&logoColor=white)](https://github.com/goruum/ruum/releases)
-[![Tests](https://img.shields.io/github/actions/workflow/status/goruum/ruum/test.yml?branch=main&style=flat-square&label=Tests&logo=githubactions&logoColor=white)](https://github.com/goruum/ruum/actions/workflows/test.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/goruum/ruum/test.yml?branch=main&style=flat-square&label=CI&logo=githubactions&logoColor=white)](https://github.com/goruum/ruum/actions/workflows/test.yml)
 [![Coverage](https://img.shields.io/codecov/c/github/goruum/ruum?style=flat-square&label=Coverage&logo=codecov&logoColor=white)](https://codecov.io/gh/goruum/ruum)
 [![Sonar](https://img.shields.io/sonar/quality_gate/goruum_ruum?server=https%3A%2F%2Fsonarcloud.io&style=flat-square&label=Sonar&logo=sonarqubecloud&logoColor=white)](https://sonarcloud.io/summary/new_code?id=goruum_ruum)
 [![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square&logo=github&logoColor=white)](https://github.com/goruum/ruum/pulls)
