@@ -57,8 +57,7 @@ clean: ## Clean build artifacts and caches
 
 fmt: ## Format code
 	@echo "💅 Formatting code..."
-	@gofmt -w -s .
-	@goimports -w .
+	@find . -name "*.go" -type f -not -path "./vendor/*" -not -path "./.git/*" -exec gofmt -s -w {} \;
 	@echo "✅ Formatting completed"
 
 vet: ## Run go vet

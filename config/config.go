@@ -27,13 +27,13 @@ func NewConfigService() *DefaultConfigService {
 func (c *DefaultConfigService) LoadFromEnv(prefix string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
-	for _, env := range os.Environ() {
+
+	for range os.Environ() {
 		// Parse environment variable
 		// In a real implementation, you'd parse key=value pairs
 		// and filter by prefix
 	}
-	
+
 	return nil
 }
 

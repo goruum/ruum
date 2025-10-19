@@ -3,16 +3,15 @@
 <div align="center">
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square&logo=opensourceinitiative&logoColor=white)](LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/goruum/ruum?style=flat-square)](https://goreportcard.com/report/github.com/goruum/ruum)
-[![GoDoc](https://img.shields.io/badge/go.dev-reference-007d9c?style=flat-square&logo=go&logoColor=white)](https://pkg.go.dev/github.com/goruum/ruum)
-[![GitHub release](https://img.shields.io/github/v/release/goruum/ruum?style=flat-square&color=blue)](https://github.com/goruum/ruum/releases)
-[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/goruum/ruum/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/goruum/ruum/actions/workflows/test.yml)
-[![Codecov](https://img.shields.io/codecov/c/github/goruum/ruum?style=flat-square&logo=codecov)](https://codecov.io/gh/goruum/ruum)
-[![Quality Gate](https://img.shields.io/sonar/quality_gate/goruum_ruum?server=https%3A%2F%2Fsonarcloud.io&style=flat-square)](https://sonarcloud.io/summary/new_code?id=goruum_ruum)
-[![Security Rating](https://img.shields.io/sonar/security_rating/goruum_ruum?server=https%3A%2F%2Fsonarcloud.io&style=flat-square)](https://sonarcloud.io/summary/new_code?id=goruum_ruum)
-[![Maintainability](https://img.shields.io/sonar/maintainability_rating/goruum_ruum?server=https%3A%2F%2Fsonarcloud.io&style=flat-square)](https://sonarcloud.io/summary/new_code?id=goruum_ruum)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](https://github.com/goruum/ruum/pulls)
+[![Documentation](https://img.shields.io/badge/Documentation-pkg.go.dev-007d9c?style=flat-square&logo=go&logoColor=white)](https://pkg.go.dev/github.com/goruum/ruum)
+[![Release](https://img.shields.io/github/v/release/goruum/ruum?style=flat-square&label=Release&color=blue&logo=github&logoColor=white)](https://github.com/goruum/ruum/releases)
+[![Tests](https://img.shields.io/github/actions/workflow/status/goruum/ruum/test.yml?branch=main&style=flat-square&label=Tests&logo=githubactions&logoColor=white)](https://github.com/goruum/ruum/actions/workflows/test.yml)
+[![Coverage](https://img.shields.io/codecov/c/github/goruum/ruum?style=flat-square&label=Coverage&logo=codecov&logoColor=white)](https://codecov.io/gh/goruum/ruum)
+[![Quality Gate](https://img.shields.io/sonar/quality_gate/goruum_ruum?server=https%3A%2F%2Fsonarcloud.io&style=flat-square&label=Quality%20Gate&logo=sonarcloud&logoColor=white)](https://sonarcloud.io/summary/new_code?id=goruum_ruum)
+[![Security](https://img.shields.io/sonar/security_rating/goruum_ruum?server=https%3A%2F%2Fsonarcloud.io&style=flat-square&label=Security&logo=sonarcloud&logoColor=white)](https://sonarcloud.io/summary/new_code?id=goruum_ruum)
+[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square&logo=github&logoColor=white)](https://github.com/goruum/ruum/pulls)
 
 **A progressive, modular web framework for Go**
 
