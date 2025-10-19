@@ -189,6 +189,12 @@ func TestCORS_PreflightRequest(t *testing.T) {
 	if allowHeaders == "" {
 		t.Error("Access-Control-Allow-Headers should not be empty")
 	}
+
+	// Verify MaxAge header is set correctly
+	maxAge := res.Header().Get("Access-Control-Max-Age")
+	if maxAge != "3600" {
+		t.Errorf("Access-Control-Max-Age = %v, want '3600'", maxAge)
+	}
 }
 
 func TestCORS_ExposeHeaders(t *testing.T) {
