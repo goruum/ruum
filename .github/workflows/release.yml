@@ -90,8 +90,6 @@ jobs:
         with:
           semantic_version: 23
           extra_plugins: |
-            @semantic-release/changelog@6
-            @semantic-release/git@10
             conventional-changelog-conventionalcommits@7
 
       - name: Trigger Go Proxy
