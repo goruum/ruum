@@ -48,6 +48,8 @@ Build scalable and maintainable server-side applications with elegant architectu
 - 🔍 **Type Conversion** - Smart type conversion for query parameters
 
 ### Middleware
+- ⚡ **Circuit Breaker** (NEW!) - Prevent cascading failures with automatic service recovery
+- ⏱️ **Timeout** (NEW!) - Request timeout control with graceful handling
 - 🚦 **Rate Limiting** - Configurable request rate limiting
 - 🗜️ **Compression** - Automatic gzip compression with smart content detection
 - 💾 **Caching** - Response caching with TTL and smart invalidation
@@ -389,6 +391,25 @@ import "github.com/goruum/ruum/middleware"
 app.Use(middleware.Recovery(logger))        // Panic recovery
 app.Use(middleware.Logger(logger))          // Request logging
 app.Use(middleware.CORS(middleware.DefaultCORSConfig()))
+
+// Circuit Breaker (NEW!) - Prevent cascading failures
+app.Use(middleware.CircuitBreaker(middleware.CircuitBreakerConfig{
+    MaxRequests: 3,
+    Timeout:     60 * time.Second,
+    ReadyToTrip: func(counts middleware.Counts) bool {
+        return counts.ConsecutiveFailures > 5
+    },
+}))
+
+// Timeout (NEW!) - Request timeout control
+app.Use(middleware.Timeout(middleware.TimeoutConfig{
+    Timeout: 30 * time.Second,
+    OnTimeout: func(ctx core.Context) {
+        logger.Warn("Request timed out", map[string]interface{}{
+            "path": ctx.Path(),
+        })
+    },
+}))
 
 // Rate limiting
 app.Use(middleware.RateLimiter(middleware.RateLimiterConfig{
