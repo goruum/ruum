@@ -3,6 +3,7 @@ package middleware
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/goruum/ruum/core"
@@ -77,35 +78,35 @@ func DefaultCircuitBreakerConfig() CircuitBreakerConfig {
 }
 
 type circuitBreaker struct {
-	config CircuitBreakerConfig
-	state  CircuitState
-	counts Counts
-	expiry time.Time
-	mu     sync.RWMutex
+	config     CircuitBreakerConfig
+	mu         sync.RWMutex
+	state      CircuitState
+	counts     Counts
+	expiry     time.Time // When the current state expires
+	generation uint64    // Incremented when state changes to Closed or HalfOpen
 }
 
 func newCircuitBreaker(config CircuitBreakerConfig) *circuitBreaker {
-	cb := &circuitBreaker{
-		config: config,
-		state:  StateClosed,
+	// Set default values if not provided
+	if config.MaxRequests == 0 {
+		config.MaxRequests = 1
 	}
-
-	if cb.config.MaxRequests == 0 {
-		cb.config.MaxRequests = 1
-	}
-
-	if cb.config.ReadyToTrip == nil {
-		cb.config.ReadyToTrip = func(counts Counts) bool {
+	if config.ReadyToTrip == nil {
+		config.ReadyToTrip = func(counts Counts) bool {
 			return counts.ConsecutiveFailures > 5
 		}
 	}
-
-	if cb.config.IsSuccessful == nil {
-		cb.config.IsSuccessful = func(err error) bool {
+	if config.IsSuccessful == nil {
+		config.IsSuccessful = func(err error) bool {
 			return err == nil
 		}
 	}
 
+	cb := &circuitBreaker{
+		config: config,
+		state:  StateClosed,
+	}
+	cb.toNewGeneration(time.Now())
 	return cb
 }
 
@@ -154,7 +155,7 @@ func (cb *circuitBreaker) afterRequest(before uint64, success bool) {
 
 	now := time.Now()
 	state, generation := cb.currentState(now)
-	
+
 	// Don't skip recording if generation changed - that would lose failure tracking
 	_ = before
 	_ = generation
@@ -197,7 +198,7 @@ func (cb *circuitBreaker) currentState(now time.Time) (CircuitState, uint64) {
 			cb.setState(StateHalfOpen)
 		}
 	}
-	return cb.state, cb.generation()
+	return cb.state, cb.getGeneration()
 }
 
 func (cb *circuitBreaker) setState(state CircuitState) {
@@ -216,25 +217,25 @@ func (cb *circuitBreaker) setState(state CircuitState) {
 }
 
 func (cb *circuitBreaker) toNewGeneration(now time.Time) {
-	cb.counts = Counts{}
+	atomic.AddUint64(&cb.generation, 1)
+	cb.counts = Counts{} // Reset counts for new generation
 
-	var zero time.Time
 	switch cb.state {
 	case StateClosed:
 		if cb.config.Interval > 0 {
 			cb.expiry = now.Add(cb.config.Interval)
 		} else {
-			cb.expiry = zero
+			cb.expiry = time.Time{} // No expiry if interval is 0
 		}
 	case StateOpen:
 		cb.expiry = now.Add(cb.config.Timeout)
 	case StateHalfOpen:
-		cb.expiry = zero
+		cb.expiry = time.Time{} // Half-open has no fixed expiry, relies on MaxRequests
 	}
 }
 
-func (cb *circuitBreaker) generation() uint64 {
-	return uint64(cb.expiry.Unix())
+func (cb *circuitBreaker) getGeneration() uint64 {
+	return atomic.LoadUint64(&cb.generation)
 }
 
 // GetState returns the current state of the circuit breaker
@@ -275,4 +276,3 @@ func CircuitBreaker(config CircuitBreakerConfig) core.MiddlewareFunc {
 		}
 	}
 }
-
