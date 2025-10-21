@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 
 	"github.com/goruum/ruum/core"
@@ -304,7 +305,7 @@ func (mc *MockContainer) Resolve(name string) (interface{}, error) {
 }
 
 // ResolveByType resolves by type (not implemented for mock)
-func (mc *MockContainer) ResolveByType(_ interface{}) (interface{}, error) {
+func (mc *MockContainer) ResolveByType(_ reflect.Type) (interface{}, error) {
 	return nil, core.NotFoundException("not implemented in mock")
 }
 

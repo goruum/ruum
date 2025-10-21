@@ -944,3 +944,81 @@ func TestDefaultContext_Cookie(t *testing.T) {
 	}
 }
 
+func TestContext_QueryDefault_WithValue(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test?key=value", nil)
+	res := httptest.NewRecorder()
+	ctx := NewContext(context.Background(), req, res, NewContainer())
+
+	result := ctx.QueryDefault("key", "default")
+	if result != "value" {
+		t.Errorf("QueryDefault() = %v, want 'value'", result)
+	}
+}
+
+func TestContext_QueryIntDefault_WithValue(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test?num=42", nil)
+	res := httptest.NewRecorder()
+	ctx := NewContext(context.Background(), req, res, NewContainer())
+
+	result := ctx.QueryIntDefault("num", 10)
+	if result != 42 {
+		t.Errorf("QueryIntDefault() = %v, want 42", result)
+	}
+}
+
+func TestContext_QueryBoolDefault_WithValue(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test?active=true", nil)
+	res := httptest.NewRecorder()
+	ctx := NewContext(context.Background(), req, res, NewContainer())
+
+	result := ctx.QueryBoolDefault("active", false)
+	if result != true {
+		t.Errorf("QueryBoolDefault() = %v, want true", result)
+	}
+}
+
+func TestContext_BindXML_Success(t *testing.T) {
+	type TestStruct struct {
+		Name string `xml:"name"`
+		Age  int    `xml:"age"`
+	}
+
+	xmlData := `<TestStruct><name>John</name><age>30</age></TestStruct>`
+	req := httptest.NewRequest("POST", "/test", strings.NewReader(xmlData))
+	req.Header.Set("Content-Type", "application/xml")
+	res := httptest.NewRecorder()
+	ctx := NewContext(context.Background(), req, res, NewContainer())
+
+	var result TestStruct
+	err := ctx.BindXML(&result)
+	if err != nil {
+		t.Fatalf("BindXML() returned error: %v", err)
+	}
+
+	if result.Name != "John" {
+		t.Errorf("Name = %v, want 'John'", result.Name)
+	}
+	if result.Age != 30 {
+		t.Errorf("Age = %v, want 30", result.Age)
+	}
+}
+
+func TestContext_Redirect_PermanentRedirect(t *testing.T) {
+	req := httptest.NewRequest("GET", "/test", nil)
+	res := httptest.NewRecorder()
+	ctx := NewContext(context.Background(), req, res, NewContainer())
+
+	err := ctx.Redirect(http.StatusMovedPermanently, "/new-location")
+	if err != nil {
+		t.Fatalf("Redirect() returned error: %v", err)
+	}
+
+	if res.Code != http.StatusMovedPermanently {
+		t.Errorf("Status code = %d, want %d", res.Code, http.StatusMovedPermanently)
+	}
+
+	location := res.Header().Get("Location")
+	if location != "/new-location" {
+		t.Errorf("Location = %v, want '/new-location'", location)
+	}
+}

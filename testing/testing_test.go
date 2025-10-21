@@ -1,8 +1,11 @@
 package testing
 
 import (
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/goruum/ruum/core"
 )
 
 func TestNewTestContext(t *testing.T) {
@@ -29,6 +32,12 @@ func TestTestContext_SetQuery(t *testing.T) {
 	if ctx.req.URL.Query().Get("page") != "1" {
 		t.Error("Query not set correctly")
 	}
+}
+
+func TestTestContext_SetParam(t *testing.T) {
+	ctx := NewTestContext("GET", "/test", nil)
+	ctx.SetParam("id", "123")
+	// SetParam is a placeholder for now, so just ensure it doesn't panic
 }
 
 func TestTestContext_GetStatusCode(t *testing.T) {
@@ -130,6 +139,31 @@ func TestTestRequest_Build(t *testing.T) {
 	}
 }
 
+func TestTestRequest_Build_WithByteSlice(t *testing.T) {
+	ctx := NewTestRequest("POST", "/test").
+		Body([]byte("test body")).
+		Build()
+
+	if ctx == nil {
+		t.Fatal("Build() with byte slice returned nil")
+	}
+}
+
+func TestTestRequest_Build_WithJSON(t *testing.T) {
+	data := map[string]string{"key": "value"}
+	ctx := NewTestRequest("POST", "/test").
+		JSON(data).
+		Build()
+
+	if ctx == nil {
+		t.Fatal("Build() with JSON returned nil")
+	}
+
+	if ctx.req.Header.Get("Content-Type") != "application/json" {
+		t.Error("Content-Type header not set for JSON")
+	}
+}
+
 func TestNewMockService(t *testing.T) {
 	mock := NewMockService()
 
@@ -204,6 +238,15 @@ func TestMockService_GetLastCall(t *testing.T) {
 	lastCall := mock.GetLastCall("Test")
 	if lastCall == nil {
 		t.Error("GetLastCall() should return last call args")
+	}
+}
+
+func TestMockService_GetLastCall_Empty(t *testing.T) {
+	mock := NewMockService()
+
+	lastCall := mock.GetLastCall("NonExistent")
+	if lastCall != nil {
+		t.Error("GetLastCall() should return nil for non-existent method")
 	}
 }
 
@@ -383,6 +426,15 @@ func TestTestContext_GetResponse(t *testing.T) {
 	}
 }
 
+func TestTestContext_RegisterValue(t *testing.T) {
+	ctx := NewTestContext("GET", "/test", nil)
+	err := ctx.RegisterValue("testKey", "testValue")
+
+	if err != nil {
+		t.Errorf("RegisterValue() error = %v", err)
+	}
+}
+
 func TestMockContainer_RegisterFactory(t *testing.T) {
 	container := NewMockContainer()
 	err := container.RegisterFactory("test", func() string { return "value" })
@@ -406,8 +458,166 @@ func TestMockContainer_GetAll(t *testing.T) {
 func TestMockContainer_ResolveByType(t *testing.T) {
 	container := NewMockContainer()
 
-	_, err := container.ResolveByType("string")
+	var s string
+	_, err := container.ResolveByType(reflect.TypeOf(s))
 	if err == nil {
 		t.Error("ResolveByType() should return error (not implemented)")
 	}
 }
+
+func TestNewTestApp(t *testing.T) {
+	// Create a simple mock application
+	container := NewMockContainer()
+	mockApp := &mockApplication{container: container}
+
+	testApp := NewTestApp(mockApp)
+
+	if testApp == nil {
+		t.Fatal("NewTestApp() returned nil")
+	}
+
+	if testApp.app == nil {
+		t.Error("TestApp should have an app instance")
+	}
+}
+
+func TestTestApp_Request(t *testing.T) {
+	container := NewMockContainer()
+	mockApp := &mockApplication{container: container}
+	testApp := NewTestApp(mockApp)
+
+	req := testApp.Request("GET", "/test")
+
+	if req == nil {
+		t.Fatal("Request() returned nil")
+	}
+
+	if req.method != "GET" {
+		t.Errorf("Request method = %s, want GET", req.method)
+	}
+
+	if req.path != "/test" {
+		t.Errorf("Request path = %s, want /test", req.path)
+	}
+}
+
+func TestTestApp_Get(t *testing.T) {
+	container := NewMockContainer()
+	mockApp := &mockApplication{container: container}
+	testApp := NewTestApp(mockApp)
+
+	req := testApp.Get("/users")
+
+	if req == nil {
+		t.Fatal("Get() returned nil")
+	}
+
+	if req.method != "GET" {
+		t.Errorf("Get method = %s, want GET", req.method)
+	}
+
+	if req.path != "/users" {
+		t.Errorf("Get path = %s, want /users", req.path)
+	}
+}
+
+func TestTestApp_Post(t *testing.T) {
+	container := NewMockContainer()
+	mockApp := &mockApplication{container: container}
+	testApp := NewTestApp(mockApp)
+
+	req := testApp.Post("/users")
+
+	if req == nil {
+		t.Fatal("Post() returned nil")
+	}
+
+	if req.method != "POST" {
+		t.Errorf("Post method = %s, want POST", req.method)
+	}
+
+	if req.path != "/users" {
+		t.Errorf("Post path = %s, want /users", req.path)
+	}
+}
+
+func TestTestApp_Put(t *testing.T) {
+	container := NewMockContainer()
+	mockApp := &mockApplication{container: container}
+	testApp := NewTestApp(mockApp)
+
+	req := testApp.Put("/users/1")
+
+	if req == nil {
+		t.Fatal("Put() returned nil")
+	}
+
+	if req.method != "PUT" {
+		t.Errorf("Put method = %s, want PUT", req.method)
+	}
+
+	if req.path != "/users/1" {
+		t.Errorf("Put path = %s, want /users/1", req.path)
+	}
+}
+
+func TestTestApp_Delete(t *testing.T) {
+	container := NewMockContainer()
+	mockApp := &mockApplication{container: container}
+	testApp := NewTestApp(mockApp)
+
+	req := testApp.Delete("/users/1")
+
+	if req == nil {
+		t.Fatal("Delete() returned nil")
+	}
+
+	if req.method != "DELETE" {
+		t.Errorf("Delete method = %s, want DELETE", req.method)
+	}
+
+	if req.path != "/users/1" {
+		t.Errorf("Delete path = %s, want /users/1", req.path)
+	}
+}
+
+func TestTestApp_Patch(t *testing.T) {
+	container := NewMockContainer()
+	mockApp := &mockApplication{container: container}
+	testApp := NewTestApp(mockApp)
+
+	req := testApp.Patch("/users/1")
+
+	if req == nil {
+		t.Fatal("Patch() returned nil")
+	}
+
+	if req.method != "PATCH" {
+		t.Errorf("Patch method = %s, want PATCH", req.method)
+	}
+
+	if req.path != "/users/1" {
+		t.Errorf("Patch path = %s, want /users/1", req.path)
+	}
+}
+
+// mockApplication is a mock implementation for testing
+type mockApplication struct {
+	container core.Container
+}
+
+func (m *mockApplication) Use(middleware ...core.MiddlewareFunc)                  {}
+func (m *mockApplication) UseGlobalGuards(guards ...core.Guard)                   {}
+func (m *mockApplication) UseGlobalInterceptors(interceptors ...core.Interceptor) {}
+func (m *mockApplication) UseGlobalPipes(pipes ...core.Pipe)                      {}
+func (m *mockApplication) UseGlobalFilters(filters ...core.ExceptionFilter)       {}
+func (m *mockApplication) Get(path string, handler core.HandlerFunc)              {}
+func (m *mockApplication) Post(path string, handler core.HandlerFunc)             {}
+func (m *mockApplication) Put(path string, handler core.HandlerFunc)              {}
+func (m *mockApplication) Delete(path string, handler core.HandlerFunc)           {}
+func (m *mockApplication) Patch(path string, handler core.HandlerFunc)            {}
+func (m *mockApplication) Listen(addr string) error                               { return nil }
+func (m *mockApplication) Close() error                                           { return nil }
+func (m *mockApplication) GetContainer() core.Container                           { return m.container }
+func (m *mockApplication) GetLogger() core.Logger                                 { return nil }
+func (m *mockApplication) SetLogger(logger core.Logger)                           {}
