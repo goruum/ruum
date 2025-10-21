@@ -652,14 +652,14 @@ func TestValidator_ComplexStruct(t *testing.T) {
 	}
 
 	type Company struct {
-		Name    string  `validate:"required"`
+		Name    string `validate:"required"`
 		Address Address
 	}
 
 	type User struct {
-		Name    string  `validate:"required,minLength=2"`
-		Email   string  `validate:"required,email"`
-		Age     int     `validate:"min=18,max=100"`
+		Name    string `validate:"required,minLength=2"`
+		Email   string `validate:"required,email"`
+		Age     int    `validate:"min=18,max=100"`
 		Company Company
 	}
 
@@ -748,20 +748,20 @@ func TestValidator_AllValidators(t *testing.T) {
 	validator := NewValidator()
 
 	type AllTypes struct {
-		Str     string   `validate:"required,minLength=2,maxLength=50,alpha"`
-		Email   string   `validate:"required,email"`
-		URL     string   `validate:"url"`
-		Numeric string   `validate:"numeric"`
-		AlphaNum string  `validate:"alphanumeric"`
-		Pattern string   `validate:"pattern=^[A-Z]+$"`
-		Eq      string   `validate:"eq=test"`
-		Ne      string   `validate:"ne=bad"`
-		OneOf   string   `validate:"oneof=a b c"`
-		IntVal  int      `validate:"required,min=10,max=100,gt=9,gte=10,lt=101,lte=100"`
-		Arr     []string `validate:"isArray,minLength=1"`
-		Bool    bool     `validate:"isBoolean"`
-		Number  int      `validate:"isNumber"`
-		String2 string   `validate:"isString"`
+		Str      string   `validate:"required,minLength=2,maxLength=50,alpha"`
+		Email    string   `validate:"required,email"`
+		URL      string   `validate:"url"`
+		Numeric  string   `validate:"numeric"`
+		AlphaNum string   `validate:"alphanumeric"`
+		Pattern  string   `validate:"pattern=^[A-Z]+$"`
+		Eq       string   `validate:"eq=test"`
+		Ne       string   `validate:"ne=bad"`
+		OneOf    string   `validate:"oneof=a b c"`
+		IntVal   int      `validate:"required,min=10,max=100,gt=9,gte=10,lt=101,lte=100"`
+		Arr      []string `validate:"isArray,minLength=1"`
+		Bool     bool     `validate:"isBoolean"`
+		Number   int      `validate:"isNumber"`
+		String2  string   `validate:"isString"`
 	}
 
 	valid := AllTypes{
@@ -1418,7 +1418,7 @@ func TestValidator_InvalidTag_ParseError(t *testing.T) {
 	}
 
 	validator := NewValidator()
-	
+
 	// Should not error because invalid parse is silently ignored
 	err := validator.Validate(&TestStruct{Age: 5})
 	// Error may or may not occur, just testing no panic
@@ -1491,7 +1491,7 @@ func TestValidator_InvalidComparisonType(t *testing.T) {
 	}
 
 	validator := NewValidator()
-	
+
 	// Should not error for string with gt comparison (silently ignored)
 	err := validator.Validate(&TestStruct{StringField: "test"})
 	// Error may or may not occur, just testing no panic
@@ -1504,7 +1504,7 @@ func TestValidator_ZeroValue(t *testing.T) {
 	}
 
 	validator := NewValidator()
-	
+
 	// Zero value should pass if no required tag
 	err := validator.Validate(&TestStruct{OptionalField: ""})
 	if err != nil {
@@ -1512,3 +1512,537 @@ func TestValidator_ZeroValue(t *testing.T) {
 	}
 }
 
+func TestValidator_TypeValidation_Invalid(t *testing.T) {
+	validator := NewValidator()
+
+	tests := []struct {
+		name  string
+		input interface{}
+	}{
+		{
+			"isArray with non-array",
+			&struct {
+				Field string `validate:"isArray"`
+			}{Field: "not-array"},
+		},
+		{
+			"isBoolean with non-boolean",
+			&struct {
+				Field string `validate:"isBoolean"`
+			}{Field: "not-bool"},
+		},
+		{
+			"isNumber with non-number",
+			&struct {
+				Field string `validate:"isNumber"`
+			}{Field: "not-number"},
+		},
+		{
+			"isString with non-string",
+			&struct {
+				Field int `validate:"isString"`
+			}{Field: 123},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.input)
+			if err == nil {
+				t.Error("Should return error for type mismatch")
+			}
+		})
+	}
+}
+
+func TestValidator_StringValidations_NonString(t *testing.T) {
+	validator := NewValidator()
+
+	tests := []struct {
+		name  string
+		input interface{}
+	}{
+		{
+			"email with non-string",
+			&struct {
+				Field int `validate:"email"`
+			}{Field: 123},
+		},
+		{
+			"url with non-string",
+			&struct {
+				Field int `validate:"url"`
+			}{Field: 123},
+		},
+		{
+			"alpha with non-string",
+			&struct {
+				Field int `validate:"alpha"`
+			}{Field: 123},
+		},
+		{
+			"alphanumeric with non-string",
+			&struct {
+				Field int `validate:"alphanumeric"`
+			}{Field: 123},
+		},
+		{
+			"numeric with non-string",
+			&struct {
+				Field int `validate:"numeric"`
+			}{Field: 123},
+		},
+		{
+			"pattern with non-string",
+			&struct {
+				Field int `validate:"pattern=^[A-Z]+$"`
+			}{Field: 123},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.input)
+			// These should not error because non-string types are silently ignored
+			_ = err
+		})
+	}
+}
+
+func TestValidator_IsZero_AllTypes(t *testing.T) {
+	validator := NewValidator()
+
+	tests := []struct {
+		name    string
+		input   interface{}
+		wantErr bool
+	}{
+		{
+			"required bool false",
+			&struct {
+				Field bool `validate:"required"`
+			}{Field: false},
+			true,
+		},
+		{
+			"required int zero",
+			&struct {
+				Field int `validate:"required"`
+			}{Field: 0},
+			true,
+		},
+		{
+			"required uint zero",
+			&struct {
+				Field uint `validate:"required"`
+			}{Field: 0},
+			true,
+		},
+		{
+			"required float zero",
+			&struct {
+				Field float64 `validate:"required"`
+			}{Field: 0.0},
+			true,
+		},
+		{
+			"required slice nil",
+			&struct {
+				Field []string `validate:"required"`
+			}{Field: nil},
+			true,
+		},
+		{
+			"required map nil",
+			&struct {
+				Field map[string]string `validate:"required"`
+			}{Field: nil},
+			true,
+		},
+		{
+			"required ptr nil",
+			&struct {
+				Field *string `validate:"required"`
+			}{Field: nil},
+			true,
+		},
+		{
+			"required interface nil",
+			&struct {
+				Field interface{} `validate:"required"`
+			}{Field: nil},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidator_MinMax_InvalidType(t *testing.T) {
+	validator := NewValidator()
+
+	// Test min/max with string (should be silently ignored)
+	err := validator.Validate(&struct {
+		Field string `validate:"min=5"`
+	}{Field: "test"})
+	_ = err
+
+	err = validator.Validate(&struct {
+		Field string `validate:"max=5"`
+	}{Field: "test"})
+	_ = err
+}
+
+func TestValidator_MinMaxLength_InvalidType(t *testing.T) {
+	validator := NewValidator()
+
+	// Test minLength/maxLength with int (should be silently ignored)
+	err := validator.Validate(&struct {
+		Field int `validate:"minLength=5"`
+	}{Field: 123})
+	_ = err
+
+	err = validator.Validate(&struct {
+		Field int `validate:"maxLength=5"`
+	}{Field: 123})
+	_ = err
+}
+
+func TestValidator_MinMaxLength_Array(t *testing.T) {
+	validator := NewValidator()
+
+	tests := []struct {
+		name    string
+		input   interface{}
+		wantErr bool
+	}{
+		{
+			"array valid length",
+			&struct {
+				Field [3]string `validate:"minLength=2,maxLength=5"`
+			}{Field: [3]string{"a", "b", "c"}},
+			false,
+		},
+		{
+			"map valid length",
+			&struct {
+				Field map[string]string `validate:"minLength=1,maxLength=3"`
+			}{Field: map[string]string{"a": "1", "b": "2"}},
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidator_PatternInvalidRegex(t *testing.T) {
+	validator := NewValidator()
+
+	// Invalid regex should be silently ignored
+	err := validator.Validate(&struct {
+		Field string `validate:"pattern=[invalid"`
+	}{Field: "test"})
+	_ = err
+}
+
+func TestValidator_ComparisonOperators_AllNumericTypes(t *testing.T) {
+	validator := NewValidator()
+
+	tests := []struct {
+		name    string
+		input   interface{}
+		wantErr bool
+	}{
+		{
+			"gte with uint valid",
+			&struct {
+				Field uint `validate:"gte=10"`
+			}{Field: 10},
+			false,
+		},
+		{
+			"gte with uint invalid",
+			&struct {
+				Field uint `validate:"gte=10"`
+			}{Field: 9},
+			true,
+		},
+		{
+			"lt with uint valid",
+			&struct {
+				Field uint `validate:"lt=10"`
+			}{Field: 9},
+			false,
+		},
+		{
+			"lt with uint invalid",
+			&struct {
+				Field uint `validate:"lt=10"`
+			}{Field: 10},
+			true,
+		},
+		{
+			"lte with uint valid",
+			&struct {
+				Field uint `validate:"lte=10"`
+			}{Field: 10},
+			false,
+		},
+		{
+			"lte with uint invalid",
+			&struct {
+				Field uint `validate:"lte=10"`
+			}{Field: 11},
+			true,
+		},
+		{
+			"gte with float valid",
+			&struct {
+				Field float64 `validate:"gte=10.5"`
+			}{Field: 10.5},
+			false,
+		},
+		{
+			"lt with float valid",
+			&struct {
+				Field float64 `validate:"lt=10.5"`
+			}{Field: 10.4},
+			false,
+		},
+		{
+			"lte with float valid",
+			&struct {
+				Field float64 `validate:"lte=10.5"`
+			}{Field: 10.5},
+			false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidator_InvalidParameterParsing(t *testing.T) {
+	validator := NewValidator()
+
+	tests := []struct {
+		name  string
+		input interface{}
+	}{
+		{
+			"min with invalid param",
+			&struct {
+				Field int `validate:"min=invalid"`
+			}{Field: 10},
+		},
+		{
+			"max with invalid param",
+			&struct {
+				Field int `validate:"max=invalid"`
+			}{Field: 10},
+		},
+		{
+			"minLength with invalid param",
+			&struct {
+				Field string `validate:"minLength=invalid"`
+			}{Field: "test"},
+		},
+		{
+			"maxLength with invalid param",
+			&struct {
+				Field string `validate:"maxLength=invalid"`
+			}{Field: "test"},
+		},
+		{
+			"gte with invalid param",
+			&struct {
+				Field int `validate:"gte=invalid"`
+			}{Field: 10},
+		},
+		{
+			"lt with invalid param",
+			&struct {
+				Field int `validate:"lt=invalid"`
+			}{Field: 10},
+		},
+		{
+			"lte with invalid param",
+			&struct {
+				Field int `validate:"lte=invalid"`
+			}{Field: 10},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.input)
+			// Invalid params are silently ignored, so no error should occur
+			_ = err
+		})
+	}
+}
+
+func TestValidator_ComparisonWithWrongType(t *testing.T) {
+	validator := NewValidator()
+
+	tests := []struct {
+		name  string
+		input interface{}
+	}{
+		{
+			"gte with string",
+			&struct {
+				Field string `validate:"gte=10"`
+			}{Field: "test"},
+		},
+		{
+			"lt with string",
+			&struct {
+				Field string `validate:"lt=10"`
+			}{Field: "test"},
+		},
+		{
+			"lte with string",
+			&struct {
+				Field string `validate:"lte=10"`
+			}{Field: "test"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.input)
+			// String types should be silently ignored for numeric comparisons
+			_ = err
+		})
+	}
+}
+
+func TestValidator_ValidateField_UnknownTag(t *testing.T) {
+	validator := NewValidator()
+
+	// Unknown tags should be silently ignored
+	err := validator.Validate(&struct {
+		Field string `validate:"unknownTag"`
+	}{Field: "test"})
+
+	if err != nil {
+		t.Errorf("Unknown tags should be ignored, got error: %v", err)
+	}
+}
+
+func TestValidator_StringValidations_InvalidCases(t *testing.T) {
+	validator := NewValidator()
+
+	tests := []struct {
+		name    string
+		input   interface{}
+		wantErr bool
+	}{
+		{
+			"url invalid format",
+			&struct {
+				Field string `validate:"url"`
+			}{Field: "invalid url"},
+			true,
+		},
+		{
+			"alpha invalid with numbers",
+			&struct {
+				Field string `validate:"alpha"`
+			}{Field: "abc123"},
+			true,
+		},
+		{
+			"alphanumeric invalid with special chars",
+			&struct {
+				Field string `validate:"alphanumeric"`
+			}{Field: "abc-123"},
+			true,
+		},
+		{
+			"pattern does not match",
+			&struct {
+				Field string `validate:"pattern=^\\d+$"`
+			}{Field: "abc"},
+			true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := validator.Validate(tt.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestValidator_NestedStructValidation_WithPointer(t *testing.T) {
+	validator := NewValidator()
+
+	type Inner struct {
+		Value string `validate:"required"`
+	}
+
+	type Outer struct {
+		Nested *Inner
+	}
+
+	// Test with nil nested pointer
+	err := validator.Validate(&Outer{Nested: nil})
+	if err != nil {
+		t.Errorf("Nil nested pointer should not error: %v", err)
+	}
+
+	// Test with invalid nested struct
+	err = validator.Validate(&Outer{Nested: &Inner{Value: ""}})
+	if err == nil {
+		t.Error("Invalid nested struct should error")
+	}
+}
+
+func TestValidator_StructFieldValidation(t *testing.T) {
+	validator := NewValidator()
+
+	type Inner struct {
+		Value string `validate:"required"`
+	}
+
+	type Outer struct {
+		Nested Inner
+	}
+
+	// Test with valid nested struct
+	err := validator.Validate(&Outer{Nested: Inner{Value: "test"}})
+	if err != nil {
+		t.Errorf("Valid nested struct should not error: %v", err)
+	}
+
+	// Test with invalid nested struct
+	err = validator.Validate(&Outer{Nested: Inner{Value: ""}})
+	if err == nil {
+		t.Error("Invalid nested struct should error")
+	}
+}

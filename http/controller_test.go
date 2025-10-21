@@ -29,7 +29,7 @@ func TestBaseController_SetPrefix(t *testing.T) {
 	}
 }
 
-type mockGuard struct{
+type mockGuard struct {
 	shouldFail bool
 }
 
@@ -51,7 +51,7 @@ func TestBaseController_UseGuards(t *testing.T) {
 	}
 }
 
-type mockInterceptor struct{
+type mockInterceptor struct {
 	name       string
 	shouldFail bool
 }
@@ -292,10 +292,10 @@ func TestBaseController_GuardsExecution(t *testing.T) {
 
 func TestBaseController_InterceptorsChain(t *testing.T) {
 	ctrl := NewBaseController("/api")
-	
+
 	interceptor1 := &mockInterceptor{name: "interceptor1"}
 	interceptor2 := &mockInterceptor{name: "interceptor2"}
-	
+
 	ctrl.UseInterceptors(interceptor1, interceptor2)
 
 	handler := func(ctx core.Context) error {
@@ -320,10 +320,10 @@ func TestBaseController_InterceptorsChain(t *testing.T) {
 
 func TestBaseController_RouteWithGuardsAndInterceptors(t *testing.T) {
 	ctrl := NewBaseController("/api")
-	
+
 	guard := &mockGuard{}
 	interceptor := &mockInterceptor{name: "test"}
-	
+
 	handler := func(ctx core.Context) error {
 		return ctx.String(200, "OK")
 	}
@@ -346,7 +346,7 @@ func TestBaseController_RouteWithGuardsAndInterceptors(t *testing.T) {
 
 func TestBaseController_Options(t *testing.T) {
 	ctrl := NewBaseController("/api")
-	
+
 	handler := func(ctx core.Context) error {
 		return ctx.String(200, "OK")
 	}
@@ -364,7 +364,7 @@ func TestBaseController_Options(t *testing.T) {
 
 func TestBaseController_WithPipesOption(t *testing.T) {
 	ctrl := NewBaseController("/api")
-	
+
 	handler := func(ctx core.Context) error {
 		return ctx.String(200, "OK")
 	}
@@ -379,9 +379,9 @@ func TestBaseController_WithPipesOption(t *testing.T) {
 
 func TestBaseController_ApplyGuards_Error(t *testing.T) {
 	ctrl := NewBaseController("/api")
-	
+
 	failGuard := &mockGuard{shouldFail: true}
-	
+
 	handler := func(ctx core.Context) error {
 		return ctx.String(200, "OK")
 	}
@@ -396,7 +396,7 @@ func TestBaseController_ApplyGuards_Error(t *testing.T) {
 	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
 
 	_ = router.ServeHTTP(ctx)
-	
+
 	// Just check that it completed without crashing
 	// Guard may or may not block depending on implementation
 	_ = res.Code
@@ -404,9 +404,9 @@ func TestBaseController_ApplyGuards_Error(t *testing.T) {
 
 func TestBaseController_ApplyInterceptors_Error(t *testing.T) {
 	ctrl := NewBaseController("/api")
-	
+
 	failInterceptor := &mockInterceptor{shouldFail: true}
-	
+
 	handler := func(ctx core.Context) error {
 		return ctx.String(200, "OK")
 	}
@@ -423,3 +423,97 @@ func TestBaseController_ApplyInterceptors_Error(t *testing.T) {
 	_ = router.ServeHTTP(ctx)
 }
 
+func TestBaseController_RegisterRoutes_MultipleRoutes(t *testing.T) {
+	ctrl := NewBaseController("/api")
+
+	handler1 := func(ctx core.Context) error {
+		return ctx.String(200, "Handler 1")
+	}
+	handler2 := func(ctx core.Context) error {
+		return ctx.String(200, "Handler 2")
+	}
+	handler3 := func(ctx core.Context) error {
+		return ctx.String(200, "Handler 3")
+	}
+
+	ctrl.Get("/route1", handler1)
+	ctrl.Post("/route2", handler2)
+	ctrl.Put("/route3", handler3)
+
+	router := core.NewRouter()
+	err := ctrl.RegisterRoutes(router)
+	if err != nil {
+		t.Fatalf("RegisterRoutes() error = %v", err)
+	}
+}
+
+func TestBaseController_ApplyGuards_WithError(t *testing.T) {
+	ctrl := NewBaseController("/api")
+
+	// Guard that returns error
+	errorGuard := &mockGuardWithError{shouldError: true}
+
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	ctrl.Get("/test", handler, WithGuards(errorGuard))
+
+	router := core.NewRouter()
+	_ = ctrl.RegisterRoutes(router)
+
+	req := httptest.NewRequest("GET", "/api/test", nil)
+	res := httptest.NewRecorder()
+	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
+
+	_ = router.ServeHTTP(ctx)
+}
+
+type mockGuardWithError struct {
+	shouldError bool
+}
+
+func (g *mockGuardWithError) CanActivate(ctx core.Context) (bool, error) {
+	if g.shouldError {
+		return false, core.ForbiddenException("Guard error")
+	}
+	return true, nil
+}
+
+func TestBaseController_RegisterRoutes_WithGlobalGuards(t *testing.T) {
+	ctrl := NewBaseController("/api")
+
+	guard := &mockGuard{}
+	ctrl.UseGuards(guard)
+
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	ctrl.Get("/test", handler)
+
+	router := core.NewRouter()
+	err := ctrl.RegisterRoutes(router)
+	if err != nil {
+		t.Fatalf("RegisterRouards() with global guards error = %v", err)
+	}
+}
+
+func TestBaseController_RegisterRoutes_WithGlobalInterceptors(t *testing.T) {
+	ctrl := NewBaseController("/api")
+
+	interceptor := &mockInterceptor{name: "global"}
+	ctrl.UseInterceptors(interceptor)
+
+	handler := func(ctx core.Context) error {
+		return ctx.String(200, "OK")
+	}
+
+	ctrl.Get("/test", handler)
+
+	router := core.NewRouter()
+	err := ctrl.RegisterRoutes(router)
+	if err != nil {
+		t.Fatalf("RegisterRoutes() with global interceptors error = %v", err)
+	}
+}

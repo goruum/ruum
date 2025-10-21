@@ -1,11 +1,12 @@
 package websocket
 
 import (
-	"github.com/gorilla/websocket"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 func TestNewHub(t *testing.T) {
@@ -266,7 +267,7 @@ func TestMessage(t *testing.T) {
 
 func TestUpgraderCheckOrigin(t *testing.T) {
 	req := httptest.NewRequest("GET", "/ws", nil)
-	
+
 	result := upgrader.CheckOrigin(req)
 	if !result {
 		t.Error("CheckOrigin should return true by default")
@@ -627,4 +628,3 @@ func TestClient_SendError_Multiple(t *testing.T) {
 		}
 	}
 }
-
