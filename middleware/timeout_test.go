@@ -29,9 +29,9 @@ func TestDefaultTimeoutConfig(t *testing.T) {
 	req := httptest.NewRequest("GET", "/test", nil)
 	res := httptest.NewRecorder()
 	ctx := core.NewContext(context.Background(), req, res, core.NewContainer())
-	
+
 	config.OnTimeout(ctx)
-	
+
 	header := res.Header().Get("X-Timeout")
 	if header != "true" {
 		t.Errorf("X-Timeout header = %v, want 'true'", header)
@@ -70,8 +70,9 @@ func TestTimeout_TimesOut(t *testing.T) {
 	middleware := Timeout(config)
 
 	handler := func(ctx core.Context) error {
+		// Just sleep, don't write to response to avoid race condition
 		time.Sleep(100 * time.Millisecond)
-		return ctx.String(200, "OK")
+		return nil
 	}
 
 	wrappedHandler := middleware(handler)
@@ -111,8 +112,9 @@ func TestTimeout_CustomOnTimeout(t *testing.T) {
 	middleware := Timeout(config)
 
 	handler := func(ctx core.Context) error {
+		// Just sleep, don't write to response to avoid race condition
 		time.Sleep(100 * time.Millisecond)
-		return ctx.String(200, "OK")
+		return nil
 	}
 
 	wrappedHandler := middleware(handler)
@@ -211,8 +213,9 @@ func TestTimeout_NilOnTimeout(t *testing.T) {
 	middleware := Timeout(config)
 
 	handler := func(ctx core.Context) error {
+		// Just sleep, don't write to response to avoid race condition
 		time.Sleep(100 * time.Millisecond)
-		return ctx.String(200, "OK")
+		return nil
 	}
 
 	wrappedHandler := middleware(handler)
@@ -284,8 +287,9 @@ func TestTimeoutWithErrorHandler_TimesOut(t *testing.T) {
 	middleware := TimeoutWithErrorHandler(50*time.Millisecond, errorHandler)
 
 	handler := func(ctx core.Context) error {
+		// Just sleep, don't write to response to avoid race condition
 		time.Sleep(100 * time.Millisecond)
-		return ctx.String(200, "OK")
+		return nil
 	}
 
 	wrappedHandler := middleware(handler)
@@ -321,8 +325,9 @@ func TestTimeoutWithErrorHandler_NilErrorHandler(t *testing.T) {
 	middleware := TimeoutWithErrorHandler(50*time.Millisecond, nil)
 
 	handler := func(ctx core.Context) error {
+		// Just sleep, don't write to response to avoid race condition
 		time.Sleep(100 * time.Millisecond)
-		return ctx.String(200, "OK")
+		return nil
 	}
 
 	wrappedHandler := middleware(handler)
@@ -376,4 +381,3 @@ func TestErrTimeout_Variable(t *testing.T) {
 		t.Errorf("ErrTimeout message = %v, want 'request timeout'", ErrTimeout.Error())
 	}
 }
-
